@@ -1,7 +1,7 @@
 [project]
 name = "pycubeview"
-version = "0.1.0"
-description = "A Hyperspectral Image Viewer for Python"
+version = "0.1.1"
+description = "A Flexible and Interactive Spectral (and more!) Image Viewer for Python"
 authors = [
     {name = "Z.M. Vig",email = "zvig@umd.edu"}
 ]
@@ -21,7 +21,7 @@ dependencies = [
 ]
 
 [project.scripts]
-cubeview = "cubeview.cli:main"
+cubeview = "pycubeview.cli:main"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

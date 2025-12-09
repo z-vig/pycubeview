@@ -11,12 +11,14 @@ from PyQt6 import QtCore
 from pyqtgraph.dockarea import Dock, DockArea  # type: ignore
 import numpy as np
 import pyqtgraph as pg  # type: ignore
+import spectralio as sio
 
 # Local Imports
 from .base_window import BaseWindow
 from .image_display_widget import ImagePickerWidget
 from .spectral_display_widget import SpectralDisplayWidget
 from .file_opening_utils import open_cube, open_wvl
+from .util_classes import PixelValue
 
 
 class CubeViewWindow(BaseWindow):
@@ -110,13 +112,19 @@ class CubeViewWindow(BaseWindow):
         self.spectral_display.data_removed.connect(remove_spectrum)
 
         # Status Bar Connections
-        def cursor_message(x: float, y: float, val: float) -> None:
+        def cursor_message(x: float, y: float, val: PixelValue) -> None:
             if x == -999 and y == -999 and val == -999:
                 self.status_bar.clearMessage()
                 return
-            self.status_bar.showMessage(
-                f"x={x:.1f}   y={y:.1f}   value={val:.5f}"
-            )
+            if val.pixel_type == "single":
+                self.status_bar.showMessage(
+                    f"x={x:.1f}   y={y:.1f}   value={val.v:.5f}"
+                )
+            elif val.pixel_type == "rgb":
+                self.status_bar.showMessage(
+                    f"x={x:.1f}   y={y:.1f}   r={val.r:.2f}  g={val.g:.2f} "
+                    f"b={val.b:.2f}"
+                )
 
         self.img_picker.mouse_moved.connect(cursor_message)
 
@@ -130,11 +138,11 @@ class CubeViewWindow(BaseWindow):
             self.set_cube(wvl, cube_data)
 
         if isinstance(image_data, str):
-            arr = open_cube(image_data)
+            arr, _ = open_cube(image_data)
             self.set_image(arr)
 
         if isinstance(wvl, str) and isinstance(cube_data, str):
-            arr = open_cube(cube_data)
+            arr, _ = open_cube(cube_data)
             wvl_arr = open_wvl(wvl)
             self.set_cube(wvl_arr, arr)
 
@@ -146,7 +154,7 @@ class CubeViewWindow(BaseWindow):
                 ("Rasterio-Compatible Files", [".bsq", ".img", ".tif"]),
             ],
         )
-        arr = open_cube(fp)
+        arr, _ = open_cube(fp)
         self.set_image(arr)
 
     def load_cube(self) -> None:
@@ -157,16 +165,24 @@ class CubeViewWindow(BaseWindow):
                 ("Rasterio-Compatible Files", [".bsq", ".img", ".tif"]),
             ],
         )
-        wvl_fp = askopenfilename(
-            title="Select Wavelength (or other context) Data",
-            filetypes=[
-                ("Wavelength File", [".wvl"]),
-                ("ENVI Header File", [".hdr"]),
-                ("Text-Based Files", [".txt", ".csv"]),
-            ],
-        )
-        arr = open_cube(cube_fp)
-        wvl = open_wvl(wvl_fp)
+        arr, suff = open_cube(cube_fp)
+        if suff == ".spcub":
+            wvl = sio.read_spec3D(cube_fp, kind="spcub").wavelength.asarray()
+        elif suff == ".geospcub":
+            wvl = sio.read_spec3D(
+                cube_fp, kind="geospcub"
+            ).wavelength.asarray()
+        else:
+            wvl_fp = askopenfilename(
+                title="Select Wavelength (or other context) Data",
+                filetypes=[
+                    ("Wavelength File", [".wvl"]),
+                    ("ENVI Header File", [".hdr"]),
+                    ("Text-Based Files", [".txt", ".csv"]),
+                ],
+            )
+            wvl = open_wvl(wvl_fp)
+
         self.set_cube(wvl, arr)
 
     def set_image(self, data: np.ndarray) -> None:

@@ -256,7 +256,7 @@ CUBE_HANDLERS: dict[str, CubeHandler] = {
 
 def open_cube(
     path: str | Path, axis_map: dict[str, int] = {"x": 2, "y": 1, "b": 0}
-) -> np.ndarray:
+) -> tuple[np.ndarray, str]:
     """
     Open a file that stores spectral (or other) cube-based information.
 
@@ -267,6 +267,13 @@ def open_cube(
     ----------
     path: str or Path
         Path to file containing wavelength data that is to be opened.
+
+    Returns
+    -------
+    cube_array: np.ndarray
+        3D Array of spectral cube data.
+    file_suffix: str
+        Lowercase suffix of the file name.
 
     Raises
     ------
@@ -286,4 +293,4 @@ def open_cube(
     if handler is None:
         raise ValueError(f"Unsupported file type: {suffix}")
 
-    return handler(path, axis_map)
+    return (handler(path, axis_map), suffix)

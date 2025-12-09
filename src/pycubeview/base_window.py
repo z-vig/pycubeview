@@ -55,7 +55,7 @@ class BaseWindow(QMainWindow):
         self.status_bar = QStatusBar(self)
         self.setStatusBar(self.status_bar)
 
-        self.setWindowTitle(f"SpecView v{version("cubeview")}")
+        self.setWindowTitle(f"CubeView v{version("pycubeview")}")
 
     def set_window_size(self, image: np.ndarray) -> None:
         if image.shape[0] > image.shape[1]:

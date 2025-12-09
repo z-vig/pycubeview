@@ -1,5 +1,8 @@
+# PyQt6 Imports
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QApplication
 from PyQt6.QtCore import pyqtSignal, Qt, QPointF
+
+# Dependencies
 import pyqtgraph as pg  # type: ignore
 from pyqtgraph.GraphicsScene.mouseEvents import MouseClickEvent  # type: ignore
 import numpy as np
@@ -7,9 +10,12 @@ from shapely.geometry import Polygon, Point
 from alphashape import alphashape  # type: ignore
 import math
 
+# Local Imports
+from .util_classes import PixelValue
+
 
 class ImagePickerWidget(QWidget):
-    mouse_moved = pyqtSignal(float, float, float)
+    mouse_moved = pyqtSignal(float, float, PixelValue)
     pixel_picked = pyqtSignal(int, int)
     lasso_finished = pyqtSignal(np.ndarray, np.ndarray)
 
@@ -54,7 +60,7 @@ class ImagePickerWidget(QWidget):
             elif data.shape[-1] > 3:
                 _ax_interp = {"y": 0, "x": 1, "t": 2}
                 self.imview.setImage(data, axes=_ax_interp, levelMode="mono")
-            self.imview.setCurrentIndex(0)
+                self.imview.setCurrentIndex(0)
         elif data.ndim == 2:
             _ax_interp = {"y": 0, "x": 1}
             self.imview.setImage(data, axes=_ax_interp, levelMode="mono")
@@ -80,7 +86,7 @@ class ImagePickerWidget(QWidget):
                 self.imview.setLevels(min=lo, max=hi)
             elif img.shape[-1] == 3:
                 rgb_lohi = []
-                for i in img.shape[-1]:
+                for i in range(img.shape[-1]):
                     rgb_lohi.append(
                         np.percentile(
                             img[np.isfinite(img[:, :, i]), i],
@@ -188,6 +194,22 @@ class ImagePickerWidget(QWidget):
         if img is None:
             return
         if 0 <= y_int < img.shape[1] and 0 <= x_int < img.shape[0]:
-            self.mouse_moved.emit(x_float, y_float, img[x_int, y_int])
+            if img.ndim == 2:
+                self.mouse_moved.emit(
+                    x_float,
+                    y_float,
+                    PixelValue(v=img[x_int, y_int], pixel_type="single"),
+                )
+            elif img.ndim == 3:
+                self.mouse_moved.emit(
+                    x_float,
+                    y_float,
+                    PixelValue(
+                        r=img[x_int, y_int, 0],
+                        g=img[x_int, y_int, 1],
+                        b=img[x_int, y_int, 2],
+                        pixel_type="rgb",
+                    ),
+                )
         else:
-            self.mouse_moved.emit(-999, -999, -999)
+            self.mouse_moved.emit(-999, -999, PixelValue.null())
