@@ -17,6 +17,7 @@ import spectralio as sio
 from .base_window import BaseWindow
 from .image_display_widget import ImagePickerWidget
 from .spectral_display_widget import SpectralDisplayWidget
+from .line_roi_window import LineRoiWindow
 from .file_opening_utils import open_cube, open_wvl
 from .util_classes import PixelValue
 
@@ -27,6 +28,10 @@ class CubeViewWindow(BaseWindow):
         wvl: Optional[np.ndarray | str] = None,
         image_data: Optional[np.ndarray | str] = None,
         cube_data: Optional[np.ndarray | str] = None,
+        discrete_color_map: (
+            list[tuple[float, float, float, float]] | str
+        ) = "tab10",
+        continuous_color_map: np.ndarray | str = "jet",
     ) -> None:
         super().__init__()
         self.polygon_cache: dict[str, qtw.QGraphicsPolygonItem | None] = {}
@@ -52,6 +57,9 @@ class CubeViewWindow(BaseWindow):
 
         self.spectral_display = SpectralDisplayWidget()
         self.spec_dock.addWidget(self.spectral_display)
+
+        # ---- Auxillary Spectral Viewing Window ----
+        self.aux_spec_display = LineRoiWindow()
 
         # ---- Linking Image and Spectral Display ----
         def intercept_pixel_coord(y: int, x: int):
@@ -102,14 +110,39 @@ class CubeViewWindow(BaseWindow):
                 f"Clear {len(self.state.spectrum_cache)} spectra from memory."
             )
 
+        def open_aux_window():
+            self.aux_spec_display.show()
+
+        def intercept_line_roi(coords: np.ndarray):
+            for i in self.state.line_roi_cache:
+                self.aux_spec_display.display_widget.spec_plot.removeItem(i)
+            self.aux_spec_display.display_widget.add_group(
+                coords, display_mean=False
+            )
+
+        def cache_line_roi(plot_list: list[pg.PlotDataItem]):
+            self.state.line_roi_cache = plot_list
+
+        def close_aux_window():
+            self.img_picker.line_roi.setVisible(False)
+
         # Image Picker Connections
         self.img_picker.pixel_picked.connect(intercept_pixel_coord)
         self.img_picker.lasso_finished.connect(intercept_roi)
+        self.img_picker.line_roi_started.connect(open_aux_window)
+        self.img_picker.line_roi_updated.connect(intercept_line_roi)
 
         # Spectral Display Connections
         self.spectral_display.data_added.connect(cache_spectrum)
         self.spectral_display.data_updated.connect(update_cache)
         self.spectral_display.data_removed.connect(remove_spectrum)
+
+        # Aux Spectral Display Connections
+        self.aux_spec_display.updated.connect(self.img_picker.update_line_roi)
+        self.aux_spec_display.closed.connect(close_aux_window)
+        self.aux_spec_display.display_widget.bulk_data_added.connect(
+            cache_line_roi
+        )
 
         # Status Bar Connections
         def cursor_message(x: float, y: float, val: PixelValue) -> None:
@@ -191,6 +224,7 @@ class CubeViewWindow(BaseWindow):
 
     def set_cube(self, wvl: np.ndarray, data: np.ndarray) -> None:
         self.spectral_display.set_cube(wvl, data)
+        self.aux_spec_display.display_widget.set_cube(wvl, data)
 
     def empty_cache(self) -> None:
         for plot, err in self.state.spectrum_cache.values():

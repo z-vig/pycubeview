@@ -15,6 +15,7 @@ from PyQt6.QtGui import QAction
 class MasterGUIState:
     spectrum_cache: dict[str, tuple[pg.PlotDataItem, pg.ErrorBarItem]]
     spectrum_edit_open: bool
+    line_roi_cache: list[pg.PlotDataItem]
     drawing: bool
 
     @classmethod
@@ -22,6 +23,7 @@ class MasterGUIState:
         return cls(
             spectrum_cache={},
             spectrum_edit_open=False,
+            line_roi_cache=[],
             drawing=False,
         )
 

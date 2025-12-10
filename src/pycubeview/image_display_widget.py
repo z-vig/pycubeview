@@ -12,12 +12,15 @@ import math
 
 # Local Imports
 from .util_classes import PixelValue
+from .utils import get_bresenham_line
 
 
 class ImagePickerWidget(QWidget):
     mouse_moved = pyqtSignal(float, float, PixelValue)
     pixel_picked = pyqtSignal(int, int)
     lasso_finished = pyqtSignal(np.ndarray, np.ndarray)
+    line_roi_started = pyqtSignal()
+    line_roi_updated = pyqtSignal(np.ndarray)
 
     def __init__(self):
         super().__init__()
@@ -27,7 +30,7 @@ class ImagePickerWidget(QWidget):
             self.pixel_select
         )
         self.imview.scene.sigMouseClicked.connect(  # type: ignore
-            self.lasso_click
+            self.roi_click_handler
         )
         self.imview.scene.sigMouseMoved.connect(  # type: ignore
             self.lasso_movement
@@ -37,6 +40,7 @@ class ImagePickerWidget(QWidget):
         )
         self._drawing = False
 
+        # ---- Adding blank ROI objects ----
         self.lasso = pg.PolyLineROI(
             [[0, 0]],
             closed=True,
@@ -46,6 +50,15 @@ class ImagePickerWidget(QWidget):
         )
         self.imview.getView().addItem(self.lasso)
         self.lasso.setVisible(False)
+
+        self.line_roi = pg.LineSegmentROI(
+            positions=[[0, 0], [0, 0]],
+            pen=pg.mkPen("r", width=2),
+            movable=True,
+            removable=False,
+        )
+        self.imview.getView().addItem(self.line_roi)
+        self.line_roi.setVisible(False)
 
         layout = QVBoxLayout()
         layout.addWidget(self.imview)
@@ -99,7 +112,10 @@ class ImagePickerWidget(QWidget):
 
     def pixel_select(self, mouse_event) -> None:
         mods = QApplication.keyboardModifiers()
-        if mods == Qt.KeyboardModifier.ControlModifier:
+        if (
+            mods == Qt.KeyboardModifier.ControlModifier
+            or mods == Qt.KeyboardModifier.AltModifier
+        ):
             return
         if self._drawing:
             return
@@ -117,19 +133,23 @@ class ImagePickerWidget(QWidget):
             return
         self.pixel_picked.emit(y, x)
 
-    def lasso_click(self, mouse_event: MouseClickEvent) -> None:
+    def roi_click_handler(self, mouse_event: MouseClickEvent) -> None:
         mods = QApplication.keyboardModifiers()
-        if mods != Qt.KeyboardModifier.ControlModifier:
-            return
-
         pos = mouse_event.scenePos()
         view_pos = self.imview.getView().mapSceneToView(pos)
+        if mods == Qt.KeyboardModifier.ControlModifier:
 
-        if not self._drawing:
-            self.start_lasso([[view_pos.x(), view_pos.y()]])
-        else:
-            if mouse_event.double():
-                self.finish_lasso()
+            if not self._drawing:
+                self.start_lasso([[view_pos.x(), view_pos.y()]])
+            else:
+                if mouse_event.double():
+                    self.finish_lasso()
+
+        if mods == Qt.KeyboardModifier.AltModifier:
+            if not self._drawing:
+                self.start_line_roi([[view_pos.x(), view_pos.y()]])
+            else:
+                return
 
     def lasso_movement(self, pos: QPointF):
         if not self._drawing:
@@ -183,6 +203,22 @@ class ImagePickerWidget(QWidget):
         xy_verts = np.concatenate([x_verts[:, None], y_verts[:, None]], axis=1)
 
         self.lasso_finished.emit(in_array, xy_verts)
+
+    def start_line_roi(self, pos):
+        self._drawing = True
+        self.line_roi_started.emit()
+        self.line_roi.setVisible(True)
+
+    def update_line_roi(self) -> None:
+        self._drawing = False
+        end_pt1, end_pt2 = self.line_roi.getState()["points"]
+        pt1_int: tuple[int, int] = (int(end_pt1.x()), int(end_pt1.y()))
+        pt2_int: tuple[int, int] = (int(end_pt2.x()), int(end_pt2.y()))
+        pixels = get_bresenham_line(pt1_int, pt2_int)
+        coords = np.empty((len(pixels), 2), dtype=np.int32)
+        for n, i in enumerate(pixels):
+            coords[n, :] = i
+        self.line_roi_updated.emit(coords)
 
     def track_cursor(self, pos) -> None:
         view_pos = self.imview.getView().mapSceneToView(pos)
