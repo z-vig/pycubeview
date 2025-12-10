@@ -56,7 +56,7 @@ def _low_bresenham_line(
             diff += 2 * dy
 
         if n > 100:
-            print("Low Slope Bresenham Line missed the endpoint.")
+            # print("Low Slope Bresenham Line missed the endpoint.")
             return pixels
 
     return pixels
@@ -86,15 +86,15 @@ def _high_bresenham_line(
     dy = pt2[1] - pt1[1]
 
     if dx < 0:
-        print("Negative High Slope")
+        # print("Negative High Slope")
         x_change = -1
         dx *= -1
     else:
-        print("Positive High Slope")
+        # print("Positive High Slope")
         x_change = 1
 
     if dy < 0:
-        print("Negative Y Change")
+        # print("Negative Y Change")
         y_change = -1
         dy *= -1
     else:
@@ -123,7 +123,7 @@ def _high_bresenham_line(
             diff += 2 * dx
 
         if n > 100:
-            print("High Slope Bresenham Line missed the endpoint.")
+            # print("High Slope Bresenham Line missed the endpoint.")
             return pixels
 
     return pixels

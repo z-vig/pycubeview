@@ -16,6 +16,8 @@ class MasterGUIState:
     spectrum_cache: dict[str, tuple[pg.PlotDataItem, pg.ErrorBarItem]]
     spectrum_edit_open: bool
     line_roi_cache: list[pg.PlotDataItem]
+    line_roi_scatter_plot: pg.ScatterPlotItem
+    color_cycle_pos: int
     drawing: bool
 
     @classmethod
@@ -24,6 +26,8 @@ class MasterGUIState:
             spectrum_cache={},
             spectrum_edit_open=False,
             line_roi_cache=[],
+            line_roi_scatter_plot=pg.ScatterPlotItem(),
+            color_cycle_pos=0,
             drawing=False,
         )
 
@@ -42,6 +46,9 @@ class BaseWindow(QMainWindow):
 
         self.clear_spectra = QAction("Clear Spectrum Plot", self)
         self.clear_spectra.setStatusTip("Clear 0 spectra from memory.")
+
+        self.save_spectra = QAction("Save Spectrum Plot", self)
+        self.save_spectra.setStatusTip("Save 0 spectra currently in memory.")
 
         menubar = self.menuBar()
         if menubar is not None:

@@ -9,6 +9,7 @@ import numpy as np
 from shapely.geometry import Polygon, Point
 from alphashape import alphashape  # type: ignore
 import math
+import cmap
 
 # Local Imports
 from .util_classes import PixelValue
@@ -22,8 +23,15 @@ class ImagePickerWidget(QWidget):
     line_roi_started = pyqtSignal()
     line_roi_updated = pyqtSignal(np.ndarray)
 
-    def __init__(self):
+    def __init__(
+        self,
+        image_cmap: pg.ColorMap = cmap.Colormap("gray").to_pyqtgraph(),
+        line_roi_cmap: pg.ColorMap = cmap.Colormap("hawaii").to_pyqtgraph(),
+    ):
         super().__init__()
+
+        self.imcmap = image_cmap
+        self.lrcmap = line_roi_cmap
 
         self.imview = pg.ImageView()
         self.imview.scene.sigMouseClicked.connect(  # type: ignore
@@ -57,6 +65,11 @@ class ImagePickerWidget(QWidget):
             movable=True,
             removable=False,
         )
+        handle_colors = [line_roi_cmap[0], line_roi_cmap[-1]]
+        for i, j in zip(self.line_roi.getHandles(), handle_colors):
+            i.pen = pg.mkPen(color=j, width=4)
+            i.update()
+
         self.imview.getView().addItem(self.line_roi)
         self.line_roi.setVisible(False)
 
@@ -73,10 +86,12 @@ class ImagePickerWidget(QWidget):
             elif data.shape[-1] > 3:
                 _ax_interp = {"y": 0, "x": 1, "t": 2}
                 self.imview.setImage(data, axes=_ax_interp, levelMode="mono")
+                self.imview.setColorMap(self.imcmap)
                 self.imview.setCurrentIndex(0)
         elif data.ndim == 2:
             _ax_interp = {"y": 0, "x": 1}
             self.imview.setImage(data, axes=_ax_interp, levelMode="mono")
+            self.imview.getImageItem().setColorMap(self.imcmap)
             self.img = data
         else:
             print("Data is the wrong number of dimensions.")
@@ -206,12 +221,15 @@ class ImagePickerWidget(QWidget):
 
     def start_line_roi(self, pos):
         self._drawing = True
+        self.line_roi.setPos(pg.Point(*pos))
         self.line_roi_started.emit()
         self.line_roi.setVisible(True)
 
     def update_line_roi(self) -> None:
         self._drawing = False
-        end_pt1, end_pt2 = self.line_roi.getState()["points"]
+        (_, end_pt1), (_, end_pt2) = self.line_roi.getSceneHandlePositions()
+        end_pt1 = self.imview.getView().mapSceneToView(end_pt1)
+        end_pt2 = self.imview.getView().mapSceneToView(end_pt2)
         pt1_int: tuple[int, int] = (int(end_pt1.x()), int(end_pt1.y()))
         pt2_int: tuple[int, int] = (int(end_pt2.x()), int(end_pt2.y()))
         pixels = get_bresenham_line(pt1_int, pt2_int)

@@ -12,6 +12,7 @@ from pyqtgraph.dockarea import Dock, DockArea  # type: ignore
 import numpy as np
 import pyqtgraph as pg  # type: ignore
 import spectralio as sio
+import cmap
 
 # Local Imports
 from .base_window import BaseWindow
@@ -20,6 +21,7 @@ from .spectral_display_widget import SpectralDisplayWidget
 from .line_roi_window import LineRoiWindow
 from .file_opening_utils import open_cube, open_wvl
 from .util_classes import PixelValue
+from .valid_colormaps import QualitativeColorMap, SequentialColorMap
 
 
 class CubeViewWindow(BaseWindow):
@@ -28,12 +30,15 @@ class CubeViewWindow(BaseWindow):
         wvl: Optional[np.ndarray | str] = None,
         image_data: Optional[np.ndarray | str] = None,
         cube_data: Optional[np.ndarray | str] = None,
-        discrete_color_map: (
-            list[tuple[float, float, float, float]] | str
-        ) = "tab10",
-        continuous_color_map: np.ndarray | str = "jet",
+        qualitative_color_map: QualitativeColorMap = "colorbrewer:Dark2",
+        sequential_color_map: SequentialColorMap = "crameri:hawaii",
     ) -> None:
         super().__init__()
+
+        self.qcmap = cmap.Colormap(qualitative_color_map)
+        self.n_qcolors = len(self.qcmap.color_stops)
+        self.scmap = cmap.Colormap(sequential_color_map)
+
         self.polygon_cache: dict[str, qtw.QGraphicsPolygonItem | None] = {}
 
         dock_area = DockArea()
@@ -63,8 +68,19 @@ class CubeViewWindow(BaseWindow):
 
         # ---- Linking Image and Spectral Display ----
         def intercept_pixel_coord(y: int, x: int):
-            spectrum_name = self.spectral_display.add_spectrum((y, x))
+            spectrum_name = self.spectral_display.add_spectrum(
+                (y, x),
+                color=self.qcmap[self.state.color_cycle_pos],  # type: ignore
+            )
             self.polygon_cache[spectrum_name] = None
+            self.state.color_cycle_pos += 1
+            if self.state.color_cycle_pos == self.n_qcolors:
+                self.state.color_cycle_pos = 0
+                raise UserWarning(
+                    "Number of spectra have exceeded the length of the"
+                    "qualitative colormap. Consider saving and clearing"
+                    "spectra before continuing."
+                )
 
         def cache_spectrum(
             plot: pg.PlotDataItem, err: pg.ErrorBarItem
@@ -76,6 +92,9 @@ class CubeViewWindow(BaseWindow):
             n_cached = len(self.state.spectrum_cache)
             self.clear_spectra.setStatusTip(
                 f"Clear {n_cached} spectra from memory."
+            )
+            self.save_spectra.setStatusTip(
+                f"Save {n_cached} spectra currently in memory."
             )
 
         def update_cache(
@@ -89,7 +108,10 @@ class CubeViewWindow(BaseWindow):
             self.polygon_cache[new_name] = self.polygon_cache.pop(old_name)
 
         def intercept_roi(in_coords: np.ndarray, verts: np.ndarray):
-            group_name = self.spectral_display.add_group(in_coords)
+            group_name = self.spectral_display.add_group(
+                in_coords,
+                single_color=self.qcmap[self.state.color_cycle_pos],  # type: ignore  # noqa
+            )
             pts = [QtCore.QPointF(*verts[n, :]) for n in range(verts.shape[0])]
             poly = QtGui.QPolygonF(pts)
             poly_item = qtw.QGraphicsPolygonItem(poly)
@@ -97,6 +119,14 @@ class CubeViewWindow(BaseWindow):
             poly_item.setBrush(QtGui.QBrush(QtGui.QColor(255, 0, 0, 30)))
             self.polygon_cache[group_name] = poly_item
             self.img_picker.imview.getView().addItem(poly_item)
+            self.state.color_cycle_pos += 1
+            if self.state.color_cycle_pos == self.n_qcolors:
+                self.state.color_cycle_pos = 0
+                raise UserWarning(
+                    "Number of spectra have exceeded the length of the"
+                    "qualitative colormap. Consider saving and clearing"
+                    "spectra before continuing."
+                )
 
         def remove_spectrum(name):
             poly = self.polygon_cache[name]
@@ -109,6 +139,10 @@ class CubeViewWindow(BaseWindow):
             self.clear_spectra.setStatusTip(
                 f"Clear {len(self.state.spectrum_cache)} spectra from memory."
             )
+            self.save_spectra.setStatusTip(
+                f"Save {len(self.state.spectrum_cache)} spectra currently in"
+                " memory"
+            )
 
         def open_aux_window():
             self.aux_spec_display.show()
@@ -119,6 +153,21 @@ class CubeViewWindow(BaseWindow):
             self.aux_spec_display.display_widget.add_group(
                 coords, display_mean=False
             )
+            brush_list = []
+            ncolors = coords.shape[0]
+            print("NColors: ", ncolors)
+            cmap_lut = self.scmap.lut(ncolors) * 255
+            for i in range(ncolors):
+                c = pg.mkColor(tuple(cmap_lut[i, :]))
+                brush_list.append(pg.mkBrush(color=c))
+            scatter_plot = pg.ScatterPlotItem(
+                pos=coords, brush=brush_list, pen=pg.mkPen((0, 0, 0, 0))
+            )
+            self.img_picker.imview.getView().removeItem(
+                self.state.line_roi_scatter_plot
+            )
+            self.img_picker.imview.getView().addItem(scatter_plot)
+            self.state.line_roi_scatter_plot = scatter_plot
 
         def cache_line_roi(plot_list: list[pg.PlotDataItem]):
             self.state.line_roi_cache = plot_list

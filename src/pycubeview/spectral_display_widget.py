@@ -1,10 +1,18 @@
-from PyQt6.QtWidgets import QWidget, QVBoxLayout
-from PyQt6.QtCore import pyqtSignal
-import pyqtgraph as pg  # type: ignore
-import numpy as np
+# Built-Ins
 from functools import partial
 
+# PyQt6 Imports
+from PyQt6.QtWidgets import QWidget, QVBoxLayout
+from PyQt6.QtCore import pyqtSignal
+
+# Dependencies
+import pyqtgraph as pg  # type: ignore
+import numpy as np
+import cmap
+
+# Local Imports
 from .spectrum_edit_window import SpectrumEditWindow
+from .valid_colormaps import SequentialColorMap
 
 
 class SpectralDisplayWidget(QWidget):
@@ -75,15 +83,21 @@ class SpectralDisplayWidget(QWidget):
         self.wvl = wvl
         self.cube = data.astype(np.float32)
 
-    def add_spectrum(self, coord: tuple[int, int]) -> str:
+    def add_spectrum(
+        self,
+        coord: tuple[int, int],
+        color: pg.Color = pg.Color((200, 200, 200)),
+    ) -> str:
         self._count += 1
         spectrum = self.cube[*coord, :]
         spec_item = pg.PlotDataItem(
             self.wvl,
             spectrum,
+            pen=pg.mkPen(color=color, width=1),
             clickable=True,
             name=f"SPECTRUM_{self._count:02d}",
         )
+        print(type(spec_item.opts["pen"]))
         errbars = pg.ErrorBarItem(x=self.wvl, y=spectrum, height=0)
         errbars.setVisible(False)
 
@@ -100,7 +114,13 @@ class SpectralDisplayWidget(QWidget):
         else:
             raise ValueError(f"Spectrum name ({name}) is invalid")
 
-    def add_group(self, coords: np.ndarray, display_mean: bool = True) -> str:
+    def add_group(
+        self,
+        coords: np.ndarray,
+        display_mean: bool = True,
+        single_color: pg.Color = pg.Color((200, 200, 200)),
+        color_map: SequentialColorMap = "crameri:hawaii",
+    ) -> str:
         self._count += 1
         if coords.ndim != 2:
             raise ValueError("Group Coordinate Array is the wrong size")
@@ -113,6 +133,7 @@ class SpectralDisplayWidget(QWidget):
         spec_item = pg.PlotDataItem(
             self.wvl,
             mean_spectrum,
+            pen=pg.mkPen(color=single_color, width=1),
             clickable=True,
             name=f"SPECTRUM_{self._count:02d}",
         )
@@ -132,10 +153,15 @@ class SpectralDisplayWidget(QWidget):
         else:
             self.spec_legend.setVisible(False)
             spec_list: list[pg.PlotDataItem] = []
-            for i in range(spec_array.shape[0]):
+            base_cmap = cmap.Colormap(color_map)
+            ncolors = spec_array.shape[0]
+            cmap_lut = base_cmap.lut(ncolors) * 255
+            for i in range(ncolors):
+                c = pg.mkColor(tuple(cmap_lut[i, :]))
                 _spec = pg.PlotDataItem(
                     self.wvl,
                     spec_array[i, :],
+                    pen=pg.mkPen(color=c, width=1),
                     clickable=False,
                     name=f"{spec_item.name()}_{i:04d}",
                 )
