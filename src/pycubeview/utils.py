@@ -55,10 +55,6 @@ def _low_bresenham_line(
         else:
             diff += 2 * dy
 
-        if n > 100:
-            # print("Low Slope Bresenham Line missed the endpoint.")
-            return pixels
-
     return pixels
 
 
@@ -121,10 +117,6 @@ def _high_bresenham_line(
             diff += 2 * (dx - dy)
         else:
             diff += 2 * dx
-
-        if n > 100:
-            # print("High Slope Bresenham Line missed the endpoint.")
-            return pixels
 
     return pixels
 

@@ -1,6 +1,6 @@
 # Built-Ins
 from typing import Optional
-from tkinter.filedialog import askopenfilename
+from pathlib import Path
 
 # PyQt6 Imports
 from PyQt6 import QtWidgets as qtw
@@ -30,6 +30,7 @@ class CubeViewWindow(BaseWindow):
         wvl: Optional[np.ndarray | str] = None,
         image_data: Optional[np.ndarray | str] = None,
         cube_data: Optional[np.ndarray | str] = None,
+        base_dir: Optional[str] = None,
         qualitative_color_map: QualitativeColorMap = "colorbrewer:Dark2",
         sequential_color_map: SequentialColorMap = "crameri:hawaii",
     ) -> None:
@@ -43,11 +44,6 @@ class CubeViewWindow(BaseWindow):
 
         dock_area = DockArea()
         self.setCentralWidget(dock_area)
-
-        # ---- Connecting menu actions to slots ----
-        self.open_display.triggered.connect(self.load_image)
-        self.open_cube.triggered.connect(self.load_cube)
-        self.clear_spectra.triggered.connect(self.empty_cache)
 
         # ---- Image Dock ----
         self.imview_dock = Dock(name="Image Window")
@@ -63,16 +59,23 @@ class CubeViewWindow(BaseWindow):
         self.spectral_display = SpectralDisplayWidget()
         self.spec_dock.addWidget(self.spectral_display)
 
+        # ---- Connecting menu actions to slots ----
+        self.open_display.triggered.connect(self.load_image)
+        self.open_cube.triggered.connect(self.load_cube)
+        self.clear_spectra.triggered.connect(self.empty_cache)
+        self.save_spectra.triggered.connect(self.spectral_display.save_plot)
+        self.link_geodata_action.triggered.connect(self.link_geodata)
+
         # ---- Auxillary Spectral Viewing Window ----
         self.aux_spec_display = LineRoiWindow()
 
         # ---- Linking Image and Spectral Display ----
         def intercept_pixel_coord(y: int, x: int):
-            spectrum_name = self.spectral_display.add_spectrum(
+            spectrum_save = self.spectral_display.add_spectrum(
                 (y, x),
-                color=self.qcmap[self.state.color_cycle_pos],  # type: ignore
+                color=self.qcmap.to_pyqtgraph()[self.state.color_cycle_pos],  # type: ignore  # noqa
             )
-            self.polygon_cache[spectrum_name] = None
+            self.polygon_cache[spectrum_save.name] = None
             self.state.color_cycle_pos += 1
             if self.state.color_cycle_pos == self.n_qcolors:
                 self.state.color_cycle_pos = 0
@@ -108,16 +111,22 @@ class CubeViewWindow(BaseWindow):
             self.polygon_cache[new_name] = self.polygon_cache.pop(old_name)
 
         def intercept_roi(in_coords: np.ndarray, verts: np.ndarray):
-            group_name = self.spectral_display.add_group(
+            new_c: QtGui.QColor = self.qcmap.to_pyqtgraph()[  # type: ignore
+                self.state.color_cycle_pos
+            ]
+            group_save = self.spectral_display.add_group(
                 in_coords,
-                single_color=self.qcmap[self.state.color_cycle_pos],  # type: ignore  # noqa
+                single_color=new_c,  # type: ignore
             )
             pts = [QtCore.QPointF(*verts[n, :]) for n in range(verts.shape[0])]
             poly = QtGui.QPolygonF(pts)
             poly_item = qtw.QGraphicsPolygonItem(poly)
             poly_item.setPen(pg.mkPen("k", width=2))
-            poly_item.setBrush(QtGui.QBrush(QtGui.QColor(255, 0, 0, 30)))
-            self.polygon_cache[group_name] = poly_item
+            new_c.setAlphaF(0.4)
+            poly_item.setBrush(QtGui.QBrush(new_c))
+
+            self.polygon_cache[group_save.name] = poly_item
+
             self.img_picker.imview.getView().addItem(poly_item)
             self.state.color_cycle_pos += 1
             if self.state.color_cycle_pos == self.n_qcolors:
@@ -151,21 +160,21 @@ class CubeViewWindow(BaseWindow):
             for i in self.state.line_roi_cache:
                 self.aux_spec_display.display_widget.spec_plot.removeItem(i)
             self.aux_spec_display.display_widget.add_group(
-                coords, display_mean=False
+                coords, display_mean=False, cache_all=True
             )
             brush_list = []
             ncolors = coords.shape[0]
-            print("NColors: ", ncolors)
             cmap_lut = self.scmap.lut(ncolors) * 255
             for i in range(ncolors):
                 c = pg.mkColor(tuple(cmap_lut[i, :]))
                 brush_list.append(pg.mkBrush(color=c))
             scatter_plot = pg.ScatterPlotItem(
-                pos=coords, brush=brush_list, pen=pg.mkPen((0, 0, 0, 0))
+                pos=coords + 0.5, brush=brush_list, pen=pg.mkPen((0, 0, 0, 0))
             )
-            self.img_picker.imview.getView().removeItem(
-                self.state.line_roi_scatter_plot
-            )
+            if self.state.line_roi_scatter_plot.getData()[0].size > 0:
+                self.img_picker.imview.getView().removeItem(
+                    self.state.line_roi_scatter_plot
+                )
             self.img_picker.imview.getView().addItem(scatter_plot)
             self.state.line_roi_scatter_plot = scatter_plot
 
@@ -173,7 +182,23 @@ class CubeViewWindow(BaseWindow):
             self.state.line_roi_cache = plot_list
 
         def close_aux_window():
-            self.img_picker.line_roi.setVisible(False)
+            self.img_picker.imview.getView().removeItem(
+                self.state.line_roi_scatter_plot
+            )
+            self.state.line_roi_scatter_plot = pg.ScatterPlotItem()
+            for i in self.state.line_roi_cache:
+                self.aux_spec_display.display_widget.spec_plot.removeItem(i)
+            self.img_picker.close_line_roi()
+
+        def update_base_dir():
+            self.spectral_display.base_data_dir = self.state.base_data_dir
+            self.aux_spec_display.display_widget.base_data_dir = (
+                self.state.base_data_dir
+            )
+            self.set_data_directory.setStatusTip(
+                "Sets the base directory for all data open and save menus."
+                f" Current: {self.state.base_data_dir}"
+            )
 
         # Image Picker Connections
         self.img_picker.pixel_picked.connect(intercept_pixel_coord)
@@ -192,6 +217,12 @@ class CubeViewWindow(BaseWindow):
         self.aux_spec_display.display_widget.bulk_data_added.connect(
             cache_line_roi
         )
+
+        # Base Window Connections
+        self.base_data_dir_updated.connect(update_base_dir)
+        if base_dir is not None:
+            self.state.base_data_dir = Path(base_dir)
+            self.base_data_dir_updated.emit()
 
         # Status Bar Connections
         def cursor_message(x: float, y: float, val: PixelValue) -> None:
@@ -229,24 +260,32 @@ class CubeViewWindow(BaseWindow):
             self.set_cube(wvl_arr, arr)
 
     def load_image(self) -> None:
-        fp = askopenfilename(
-            title="Select Image Data",
-            filetypes=[
-                ("Spectral Cube Files", [".spcub", ".geospcub"]),
-                ("Rasterio-Compatible Files", [".bsq", ".img", ".tif"]),
-            ],
+        fp_str, fp_type = qtw.QFileDialog.getOpenFileName(
+            caption="Select Image Data",
+            filter=(
+                "Spectral Cube Files (*.spcub, *.geospcub;;"
+                "Rasterio-Compatible Files (*.bsq, *.img, *.tif)"
+            ),
+            directory=str(self.state.base_data_dir),
         )
+        if fp_str == "":
+            return
+        fp = Path(fp_str)
         arr, _ = open_cube(fp)
         self.set_image(arr)
 
     def load_cube(self) -> None:
-        cube_fp = askopenfilename(
-            title="Select Cube Data",
-            filetypes=[
-                ("Spectral Cube Files", [".spcub", ".geospcub"]),
-                ("Rasterio-Compatible Files", [".bsq", ".img", ".tif"]),
-            ],
+        cube_fp_str, fp_type = qtw.QFileDialog.getOpenFileName(
+            caption="Select Cube Data",
+            filter=(
+                "Spectral Cube Files (*.spcub *.geospcub;;"
+                "Rasterio-Compatible Files (*.bsq *.img *.tif)"
+            ),
+            directory=str(self.state.base_data_dir),
         )
+        if cube_fp_str == "":
+            return
+        cube_fp = Path(cube_fp_str)
         arr, suff = open_cube(cube_fp)
         if suff == ".spcub":
             wvl = sio.read_spec3D(cube_fp, kind="spcub").wavelength.asarray()
@@ -255,14 +294,15 @@ class CubeViewWindow(BaseWindow):
                 cube_fp, kind="geospcub"
             ).wavelength.asarray()
         else:
-            wvl_fp = askopenfilename(
-                title="Select Wavelength (or other context) Data",
-                filetypes=[
-                    ("Wavelength File", [".wvl"]),
-                    ("ENVI Header File", [".hdr"]),
-                    ("Text-Based Files", [".txt", ".csv"]),
-                ],
+            wvl_fp_str, fp_type = qtw.QFileDialog.getOpenFileName(
+                caption="Select Wavelength (or other context) Data",
+                filter=(
+                    "Wavelength File (*.wvl);;ENVI Header File (*.hdr);;"
+                    "Text-Based Files (*.txt *.csv))"
+                ),
+                directory=str(self.state.base_data_dir),
             )
+            wvl_fp = Path(wvl_fp_str)
             wvl = open_wvl(wvl_fp)
 
         self.set_cube(wvl, arr)
@@ -285,3 +325,21 @@ class CubeViewWindow(BaseWindow):
                 continue
             self.img_picker.imview.getView().removeItem(poly)
         self.spectral_display.plot_reset.emit()
+        self.polygon_cache = {}
+        self.state.spectrum_cache = {}
+        self.state.color_cycle_pos = 0
+
+    def link_geodata(self) -> None:
+        geodata_fp_str, fp_type = qtw.QFileDialog.getOpenFileName(
+            caption="Select Geodata File",
+            filter="Geodata File (*.geodata)",
+            directory=str(self.state.base_data_dir),
+        )
+        if geodata_fp_str == "":
+            return
+        geodata_fp = Path(geodata_fp_str)
+        self.link_geodata_action.setStatusTip(
+            "Link Geolocation Data from a file. (Currently linked "
+            f"from {geodata_fp})"
+        )
+        self.spectral_display.link_geodata(Path(geodata_fp))

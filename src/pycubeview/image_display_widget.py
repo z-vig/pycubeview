@@ -1,3 +1,6 @@
+# Built-Ins
+from pathlib import Path
+
 # PyQt6 Imports
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QApplication
 from PyQt6.QtCore import pyqtSignal, Qt, QPointF
@@ -32,6 +35,7 @@ class ImagePickerWidget(QWidget):
 
         self.imcmap = image_cmap
         self.lrcmap = line_roi_cmap
+        self.base_data_dir: Path = Path.cwd()
 
         self.imview = pg.ImageView()
         self.imview.scene.sigMouseClicked.connect(  # type: ignore
@@ -237,6 +241,10 @@ class ImagePickerWidget(QWidget):
         for n, i in enumerate(pixels):
             coords[n, :] = i
         self.line_roi_updated.emit(coords)
+
+    def close_line_roi(self) -> None:
+        self.line_roi.setVisible(False)
+        self._drawing = False
 
     def track_cursor(self, pos) -> None:
         view_pos = self.imview.getView().mapSceneToView(pos)

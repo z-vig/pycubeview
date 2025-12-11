@@ -5,7 +5,7 @@ import numpy as np
 from PyQt6.QtWidgets import QApplication
 
 # Local Imports
-from .spectral_viewing_window import CubeViewWindow
+from .cube_view_window import CubeViewWindow
 
 
 def open_cubeview(

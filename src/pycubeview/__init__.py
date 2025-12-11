@@ -8,7 +8,7 @@ A Hyperspectral Image Viewer for Python
 ## Example
 """
 
-from .spectral_viewing_window import CubeViewWindow
+from .cube_view_window import CubeViewWindow
 from .helper_functions import open_cubeview
 
 __all__ = ["open_cubeview", "CubeViewWindow"]

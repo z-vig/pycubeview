@@ -1,14 +1,17 @@
 # Built-Ins
 from functools import partial
+from pathlib import Path
 
 # PyQt6 Imports
-from PyQt6.QtWidgets import QWidget, QVBoxLayout
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QFileDialog
 from PyQt6.QtCore import pyqtSignal
 
 # Dependencies
 import pyqtgraph as pg  # type: ignore
 import numpy as np
 import cmap
+import spectralio as sio
+from spectralio.geospatial_models import PointModel
 
 # Local Imports
 from .spectrum_edit_window import SpectrumEditWindow
@@ -57,6 +60,7 @@ class SpectralDisplayWidget(QWidget):
     data_added = pyqtSignal(pg.PlotDataItem, pg.ErrorBarItem)
     data_updated = pyqtSignal(pg.PlotDataItem, pg.ErrorBarItem, str, str)
     data_removed = pyqtSignal(str)
+    geodata_linked = pyqtSignal()
     bulk_data_added = pyqtSignal(list)
     plot_reset = pyqtSignal()
 
@@ -66,7 +70,12 @@ class SpectralDisplayWidget(QWidget):
         self.spec_plot = pg.PlotWidget()
         self.spec_legend = self.spec_plot.addLegend()
 
-        self.wvl = np.empty((0, 0, 0), dtype=np.float32)
+        self.base_data_dir: Path = Path.cwd()
+        self.geodata_fp: Path | None = None
+
+        self.save_cache: list[sio.PointSpectrum1D | sio.SpectrumGroup] = []
+
+        self.wvl = np.empty((0), dtype=np.float32)
         self.cube = np.empty((0, 0, 0), dtype=np.float32)
         self._count = 0
         self._editing = False
@@ -76,6 +85,10 @@ class SpectralDisplayWidget(QWidget):
         self.setLayout(layout)
 
         self.plot_reset.connect(self.handle_reset)
+
+    def link_geodata(self, geodata_fp: Path) -> None:
+        self.geodata_fp = Path(geodata_fp)
+        self.geodata_linked.emit()
 
     def set_cube(self, wvl: np.ndarray, data: np.ndarray) -> None:
         if data.ndim != 3:
@@ -87,17 +100,27 @@ class SpectralDisplayWidget(QWidget):
         self,
         coord: tuple[int, int],
         color: pg.Color = pg.Color((200, 200, 200)),
-    ) -> str:
+    ) -> sio.PointSpectrum1D:
+        current_save = sio.PointSpectrum1D.from_pixel_coord(
+            0, 0, spec1d=sio.Spectrum1D.empty()
+        )
         self._count += 1
         spectrum = self.cube[*coord, :]
+        spec_name = f"SPECTRUM_{self._count:02d}"
         spec_item = pg.PlotDataItem(
             self.wvl,
             spectrum,
             pen=pg.mkPen(color=color, width=1),
             clickable=True,
-            name=f"SPECTRUM_{self._count:02d}",
+            name=spec_name,
         )
-        print(type(spec_item.opts["pen"]))
+
+        current_save.name = spec_name
+        current_save.spectrum = list(spectrum)
+        current_save.wavelength = sio.WvlModel.default_bbl(
+            list(self.wvl.astype(float)), "um"
+        )
+
         errbars = pg.ErrorBarItem(x=self.wvl, y=spectrum, height=0)
         errbars.setVisible(False)
 
@@ -108,11 +131,9 @@ class SpectralDisplayWidget(QWidget):
             partial(self.edit_spectrum, spec_item, errbars)
         )
 
-        name = spec_item.name()
-        if name is not None:
-            return name
-        else:
-            raise ValueError(f"Spectrum name ({name}) is invalid")
+        self.save_cache.append(current_save)
+
+        return current_save
 
     def add_group(
         self,
@@ -120,7 +141,9 @@ class SpectralDisplayWidget(QWidget):
         display_mean: bool = True,
         single_color: pg.Color = pg.Color((200, 200, 200)),
         color_map: SequentialColorMap = "crameri:hawaii",
-    ) -> str:
+        cache_all: bool = False,
+    ) -> sio.SpectrumGroup:
+        current_save = sio.SpectrumGroup.empty()
         self._count += 1
         if coords.ndim != 2:
             raise ValueError("Group Coordinate Array is the wrong size")
@@ -130,13 +153,33 @@ class SpectralDisplayWidget(QWidget):
         spec_array = self.cube[coords[:, 1], coords[:, 0], :]
         mean_spectrum = np.mean(spec_array, axis=0)
         err_spectrum = np.std(spec_array, axis=0, ddof=1)
+        spec_name = f"SPECTRUM_{self._count:02d}"
         spec_item = pg.PlotDataItem(
             self.wvl,
             mean_spectrum,
             pen=pg.mkPen(color=single_color, width=1),
             clickable=True,
-            name=f"SPECTRUM_{self._count:02d}",
+            name=spec_name,
         )
+
+        _wvl = sio.WvlModel.default_bbl(list(self.wvl.astype(float)), "um")
+        spectra_list: list[sio.PointSpectrum1D] = [
+            sio.PointSpectrum1D(
+                name=f"{spec_name}_{i:04d}",
+                spectrum=list(spec_array[i, :].astype(float)),
+                wavelength=_wvl,
+                pixel=PointModel(x=coords[i, 0], y=coords[i, 1]),
+            )
+            for i in range(spec_array.shape[0])
+        ]
+        spectra_pts_list = [
+            (coords[n, 0], coords[n, 1]) for n in range(coords.shape[0])
+        ]
+        current_save.name = spec_name
+        current_save.spectra = spectra_list
+        current_save.spectra_pts = spectra_pts_list
+        current_save.wavelength = _wvl
+
         if display_mean:
             errbars = pg.ErrorBarItem(
                 x=self.wvl, y=mean_spectrum, height=2 * err_spectrum, beam=10
@@ -149,6 +192,8 @@ class SpectralDisplayWidget(QWidget):
             spec_item.sigClicked.connect(
                 partial(self.edit_spectrum, spec_item, errbars)
             )
+
+            self.save_cache.append(current_save)
 
         else:
             self.spec_legend.setVisible(False)
@@ -169,11 +214,13 @@ class SpectralDisplayWidget(QWidget):
                 spec_list.append(_spec)
             self.bulk_data_added.emit(spec_list)
 
-        name = spec_item.name()
-        if name is not None:
-            return name
-        else:
-            raise ValueError("Group Name is None")
+            if cache_all:
+                for obj in spectra_list:
+                    self.save_cache.append(obj)
+            else:
+                self.save_cache.append(current_save)
+
+        return current_save
 
     def edit_spectrum(self, plot: pg.PlotDataItem, err: pg.ErrorBarItem):
         if self._editing:
@@ -218,3 +265,40 @@ class SpectralDisplayWidget(QWidget):
 
     def handle_reset(self):
         self._count = 0
+
+    def save_plot(self) -> None:
+        qt_save_dir = QFileDialog.getExistingDirectory(
+            caption="Select Save Directory", directory=str(self.base_data_dir)
+        )
+        if qt_save_dir == "":
+            return
+        save_dir = Path(qt_save_dir)
+        pt_list: list[sio.GeoSpectrum1D] = []
+        poly_list: list[sio.SpectrumGroup] = []
+        geodata_obj: sio.BaseGeolocationModel | None = None
+        if self.geodata_fp is not None:
+            geodata_obj = sio.read_geodata(self.geodata_fp)
+
+        for save in self.save_cache:
+            save_path = Path(save_dir, save.name)
+            sio.write_from_object(save, save_path)
+
+            if isinstance(save, sio.PointSpectrum1D):
+                if geodata_obj is not None:
+                    geosave = sio.GeoSpectrum1D.from_point_spec(
+                        geodata_obj, save
+                    )
+                    pt_list.append(geosave)
+
+            elif isinstance(save, sio.SpectrumGroup):
+                poly_list.append(save)
+
+        if self.geodata_fp is not None:
+            if len(pt_list) > 0:
+                sio.make_points(pt_list, Path(save_dir, "point_spectra.shp"))
+            if len(poly_list) > 0:
+                sio.make_polygons(
+                    poly_list,
+                    self.geodata_fp,
+                    Path(save_dir, "area_spectra.shp"),
+                )
