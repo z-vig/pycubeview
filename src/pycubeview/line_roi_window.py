@@ -120,8 +120,10 @@ class LineRoiWindow(qtw.QMainWindow):
         if self.xdata is None:
             return
         if xpos < self.xdata.min():
+            self.profile_indicator.setPos(self.xdata.min())
             return
         if xpos > self.xdata.max():
+            self.profile_indicator.setPos(self.xdata.max())
             return
         profile_x = np.arange(
             0, self.current_display_roi_array.shape[0], dtype=int
