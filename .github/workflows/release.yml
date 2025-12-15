@@ -12,12 +12,12 @@ permissions:
   contents: write
 
 jobs:
-    build:
-      runs-on: ${{ matrix.os }}
-      strategy:
-        matrix:
-          os: [ubuntu-latest, macos-latest, windows-latest]
-          python-version: ["3.13"]
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.13"]
 
     steps:
       - name: Checkout Repository
