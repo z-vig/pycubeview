@@ -1,6 +1,5 @@
 # Built-ins
 from dataclasses import dataclass
-from importlib.metadata import version
 from pathlib import Path
 
 # Dependencies
@@ -11,6 +10,8 @@ import numpy as np
 from PyQt6.QtWidgets import QMainWindow, QStatusBar, QMenu, QFileDialog
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QAction
+
+PKG_VERSION = "0.1.6"
 
 
 @dataclass
@@ -92,7 +93,7 @@ class BaseWindow(QMainWindow):
         self.status_bar = QStatusBar(self)
         self.setStatusBar(self.status_bar)
 
-        self.setWindowTitle(f"CubeView v{version("pycubeview")}")
+        self.setWindowTitle(f"CubeView v{PKG_VERSION}")
 
         # ---- Setting Menu Actions ----
         self.set_data_directory.triggered.connect(self.set_base_directory)
