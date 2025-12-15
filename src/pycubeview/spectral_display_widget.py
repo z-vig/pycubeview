@@ -4,6 +4,7 @@ from pathlib import Path
 
 # PyQt6 Imports
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QFileDialog
+from PyQt6.QtGui import QAction
 from PyQt6.QtCore import pyqtSignal
 
 # Dependencies
@@ -16,6 +17,7 @@ from spectralio.geospatial_models import PointModel
 # Local Imports
 from .spectrum_edit_window import SpectrumEditWindow
 from .valid_colormaps import SequentialColorMap
+from .text_input_widget import TextInputDialog
 
 
 class SpectralDisplayWidget(QWidget):
@@ -68,6 +70,11 @@ class SpectralDisplayWidget(QWidget):
         super().__init__()
 
         self.spec_plot = pg.PlotWidget()
+        item = self.spec_plot.getPlotItem()
+        if item is None:
+            return
+        self.current_plot_name: str = "Spectral Group"
+        item.setTitle(self.current_plot_name)
         self.spec_legend = self.spec_plot.addLegend()
 
         self.base_data_dir: Path = Path.cwd()
@@ -84,7 +91,17 @@ class SpectralDisplayWidget(QWidget):
         layout.addWidget(self.spec_plot)
         self.setLayout(layout)
 
+        # ---- Adding Actions to Right-Click Context Menu ----
+        menu = item.getViewBox().menu
+        if menu is not None:
+            self.plot_name_action = QAction("Set Plot Name", self)
+            menu.addAction(self.plot_name_action)
+
+        # ---- Connecting Signals ----
         self.plot_reset.connect(self.handle_reset)
+
+        # ---- Connecting Menu Actions ----
+        self.plot_name_action.triggered.connect(self.set_plot_name)
 
     def link_geodata(self, geodata_fp: Path) -> None:
         self.geodata_fp = Path(geodata_fp)
@@ -120,6 +137,8 @@ class SpectralDisplayWidget(QWidget):
         current_save.wavelength = sio.WvlModel.default_bbl(
             list(self.wvl.astype(float)), "um"
         )
+        current_save.pixel.x = coord[1]
+        current_save.pixel.y = coord[0]
 
         errbars = pg.ErrorBarItem(x=self.wvl, y=spectrum, height=0)
         errbars.setVisible(False)
@@ -179,6 +198,7 @@ class SpectralDisplayWidget(QWidget):
         current_save.spectra = spectra_list
         current_save.spectra_pts = spectra_pts_list
         current_save.wavelength = _wvl
+        current_save.resolve_polygon()
 
         if display_mean:
             errbars = pg.ErrorBarItem(
@@ -294,11 +314,24 @@ class SpectralDisplayWidget(QWidget):
                 poly_list.append(save)
 
         if self.geodata_fp is not None:
+            group_name = self.current_plot_name.lower().replace(" ", "_")
             if len(pt_list) > 0:
-                sio.make_points(pt_list, Path(save_dir, "point_spectra.shp"))
+                sio.make_points(pt_list, Path(save_dir, f"{group_name}.shp"))
             if len(poly_list) > 0:
                 sio.make_polygons(
                     poly_list,
                     self.geodata_fp,
-                    Path(save_dir, "area_spectra.shp"),
+                    Path(save_dir, f"{group_name}.shp"),
                 )
+
+    def set_plot_name(self) -> None:
+        dialog = TextInputDialog()
+        item = self.spec_plot.getPlotItem()
+        if item is None:
+            return
+        if dialog.exec():
+            txt = dialog.text
+            if txt is None:
+                return
+            self.current_plot_name = txt
+            item.setTitle(txt)

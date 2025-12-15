@@ -317,6 +317,8 @@ class CubeViewWindow(BaseWindow):
     def set_cube(self, wvl: np.ndarray, data: np.ndarray) -> None:
         self.spectral_display.set_cube(wvl, data)
         self.aux_spec_display.display_widget.set_cube(wvl, data)
+        self.state.cube_attached = True
+        self.cube_indicator.toggle()
 
     def empty_cache(self) -> None:
         for plot, err in self.state.spectrum_cache.values():
@@ -346,3 +348,5 @@ class CubeViewWindow(BaseWindow):
             f"from {geodata_fp})"
         )
         self.spectral_display.link_geodata(Path(geodata_fp))
+        self.state.geodata_attached = True
+        self.geo_indicator.toggle()

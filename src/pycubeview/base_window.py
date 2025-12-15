@@ -7,9 +7,12 @@ import pyqtgraph as pg  # type: ignore
 import numpy as np
 
 # PyQt6 Imports
-from PyQt6.QtWidgets import QMainWindow, QStatusBar, QMenu, QFileDialog
+from PyQt6.QtWidgets import QMainWindow, QStatusBar, QMenu, QFileDialog, QLabel
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QAction
+
+# Local Imports
+from .status_indicator import BaseStatusIndicator
 
 PKG_VERSION = "0.1.6"
 
@@ -92,6 +95,16 @@ class BaseWindow(QMainWindow):
 
         self.status_bar = QStatusBar(self)
         self.setStatusBar(self.status_bar)
+
+        # ---- Setting Status Indicator Icons ----
+        self.cube_indicator = BaseStatusIndicator("Cube", QLabel("■"))
+        self.cube_indicator.icon.setStatusTip("Spectral Cube has been loaded.")
+
+        self.geo_indicator = BaseStatusIndicator("Geo", QLabel("⬤"))
+        self.geo_indicator.icon.setStatusTip("Geo data has been loaded.")
+
+        self.status_bar.addPermanentWidget(self.cube_indicator.icon)
+        self.status_bar.addPermanentWidget(self.geo_indicator.icon)
 
         self.setWindowTitle(f"CubeView v{PKG_VERSION}")
 
