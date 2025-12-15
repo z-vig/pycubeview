@@ -14,7 +14,7 @@ from PyQt6.QtGui import QAction
 # Local Imports
 from .status_indicator import BaseStatusIndicator
 
-PKG_VERSION = "0.1.6"
+PKG_VERSION = "0.1.7"
 
 
 @dataclass
