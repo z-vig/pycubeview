@@ -58,6 +58,7 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install nuitka
 
+
       - name: Build with Nuitka (Windows)
         if: runner.os == 'Windows'
         shell: powershell
@@ -66,7 +67,8 @@ jobs:
             --enable-plugin=pyqt6 `
             --mode=standalone `
             --output-dir=dist `
-            --assume-yes-for-downloads
+            --assume-yes-for-downloads `
+            --include-package=pycubeview
 
       - name: Build with Nuitka (Linux)
         if: runner.os == 'Linux'
@@ -75,7 +77,8 @@ jobs:
           python -m nuitka src/pycubeview/main.py \
             --enable-plugin=pyqt6 \
             --mode=standalone \
-            --output-dir=dist
+            --output-dir=dist \
+            --include-package=pycubeview
 
       - name: Build with Nuitka (macOS)
         if: runner.os == 'macOS'
@@ -84,7 +87,8 @@ jobs:
           python -m nuitka src/pycubeview/main.py \
             --enable-plugin=pyqt6 \
             --mode=standalone \
-            --output-dir=dist
+            --output-dir=dist \
+            --include-package=pycubeview
 
       - name: Package Build (Windows)
         if: runner.os == 'Windows'
