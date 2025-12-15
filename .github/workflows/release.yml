@@ -62,6 +62,8 @@ jobs:
       - name: Build with Nuitka (Windows)
         if: runner.os == 'Windows'
         shell: powershell
+        env:
+          PYTHONPATH: src
         run: |
           python -m nuitka src/pycubeview/main.py `
             --module=pycubeview.main `
@@ -74,6 +76,8 @@ jobs:
       - name: Build with Nuitka (Linux)
         if: runner.os == 'Linux'
         shell: bash
+        env:
+          PYTHONPATH: src
         run: |
           python -m nuitka src/pycubeview/main.py \
             --module=pycubview.main \
@@ -85,6 +89,8 @@ jobs:
       - name: Build with Nuitka (macOS)
         if: runner.os == 'macOS'
         shell: bash
+        env:
+          PYTHONPATH: src
         run: |
           python -m nuitka src/pycubeview/main.py \
             --module=pycubview.main \
