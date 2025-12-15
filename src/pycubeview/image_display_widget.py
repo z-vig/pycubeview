@@ -15,6 +15,7 @@ import math
 import cmap
 
 # Local Imports
+from .valid_colormaps import SequentialColorMap
 from .util_classes import PixelValue
 from .utils import get_bresenham_line
 
@@ -28,13 +29,13 @@ class ImagePickerWidget(QWidget):
 
     def __init__(
         self,
-        image_cmap: pg.ColorMap = cmap.Colormap("gray").to_pyqtgraph(),
-        line_roi_cmap: pg.ColorMap = cmap.Colormap("hawaii").to_pyqtgraph(),
+        image_cmap: SequentialColorMap = "matlab:gray",
+        line_roi_cmap: SequentialColorMap = "crameri:hawaii",
     ):
         super().__init__()
 
-        self.imcmap = image_cmap
-        self.lrcmap = line_roi_cmap
+        self.imcmap = cmap.Colormap(image_cmap)
+        self.lrcmap = cmap.Colormap(line_roi_cmap)
         self.base_data_dir: Path = Path.cwd()
 
         self.imview = pg.ImageView()
@@ -69,7 +70,10 @@ class ImagePickerWidget(QWidget):
             movable=True,
             removable=False,
         )
-        handle_colors = [line_roi_cmap[0], line_roi_cmap[-1]]
+        handle_colors = [
+            self.lrcmap.to_pyqtgraph()[0],
+            self.lrcmap.to_pyqtgraph()[-1],
+        ]
         for i, j in zip(self.line_roi.getHandles(), handle_colors):
             i.pen = pg.mkPen(color=j, width=4)
             i.update()
@@ -90,12 +94,12 @@ class ImagePickerWidget(QWidget):
             elif data.shape[-1] > 3:
                 _ax_interp = {"y": 0, "x": 1, "t": 2}
                 self.imview.setImage(data, axes=_ax_interp, levelMode="mono")
-                self.imview.setColorMap(self.imcmap)
+                self.imview.setColorMap(self.imcmap.to_pyqtgraph())
                 self.imview.setCurrentIndex(0)
         elif data.ndim == 2:
             _ax_interp = {"y": 0, "x": 1}
             self.imview.setImage(data, axes=_ax_interp, levelMode="mono")
-            self.imview.getImageItem().setColorMap(self.imcmap)
+            self.imview.getImageItem().setColorMap(self.imcmap.to_pyqtgraph())
             self.img = data
         else:
             print("Data is the wrong number of dimensions.")
