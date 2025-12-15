@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  testing:
 
     runs-on: ${{ matrix.os }}
     strategy:
