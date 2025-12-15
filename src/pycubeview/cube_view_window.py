@@ -135,8 +135,8 @@ class CubeViewWindow(BaseWindow):
             if self.state.color_cycle_pos == self.n_qcolors:
                 self.state.color_cycle_pos = 0
                 raise UserWarning(
-                    "Number of spectra have exceeded the length of the"
-                    "qualitative colormap. Consider saving and clearing"
+                    "Number of spectra have exceeded the length of the "
+                    "qualitative colormap. Consider saving and clearing "
                     "spectra before continuing."
                 )
 

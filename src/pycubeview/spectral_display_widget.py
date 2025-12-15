@@ -284,6 +284,7 @@ class SpectralDisplayWidget(QWidget):
         self.edit_win.closed.connect(close_window)
 
     def handle_reset(self):
+        self.save_cache = []
         self._count = 0
 
     def save_plot(self) -> None:
@@ -315,13 +316,18 @@ class SpectralDisplayWidget(QWidget):
 
         if self.geodata_fp is not None:
             group_name = self.current_plot_name.lower().replace(" ", "_")
+            shp_file_dir = Path(save_dir, f"{group_name}.shapes")
+            if not shp_file_dir.exists():
+                shp_file_dir.mkdir()
             if len(pt_list) > 0:
-                sio.make_points(pt_list, Path(save_dir, f"{group_name}.shp"))
+                sio.make_points(
+                    pt_list, Path(shp_file_dir, f"{group_name}_points.shp")
+                )
             if len(poly_list) > 0:
                 sio.make_polygons(
                     poly_list,
                     self.geodata_fp,
-                    Path(save_dir, f"{group_name}.shp"),
+                    Path(shp_file_dir, f"{group_name}_areas.shp"),
                 )
 
     def set_plot_name(self) -> None:

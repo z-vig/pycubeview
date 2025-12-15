@@ -980,14 +980,14 @@ files = [
 
 [[package]]
 name = "spectralio"
-version = "0.1.5"
+version = "0.1.6"
 description = "Python-Optimized file formats for spectral data"
 optional = false
 python-versions = "<4,>=3.13"
 groups = ["main"]
 files = [
-    {file = "spectralio-0.1.5-py3-none-any.whl", hash = "sha256:c66643ff334ba6d867b9eadc01f78ebd39eb702d19a732fcb6067b6c1775f1e0"},
-    {file = "spectralio-0.1.5.tar.gz", hash = "sha256:d343b014912ebe8f08cfd3d9a372331ddcf4ef8285ac3b2b80a20e2825995892"},
+    {file = "spectralio-0.1.6-py3-none-any.whl", hash = "sha256:3107be2a436242b27492c1408779a0467ef19d65f49811b58ae6ed5929adc34f"},
+    {file = "spectralio-0.1.6.tar.gz", hash = "sha256:b07cb1738ee1f142541f633cfbeb4c62a36bc9aff2de9ef74bbd9a059305db3f"},
 ]
 
 [package.dependencies]
