@@ -211,3 +211,8 @@ test_saves
 test_saves_old
 sample_data
 
+main.dist/
+main.build/
+main.onefile-build/
+main.exe
+PyCubeView.exe
