@@ -1,7 +1,7 @@
 # pycubeview 🔎
 
 A Flexible and Interactive Spectral (and more!) Image Viewer for Python
-
+[![Unit Tests](https://github.com/z-vig/pycubeview/actions/workflows/ci.yml/badge.svg)](https://github.com/z-vig/pycubeview/actions/workflows/ci.yml)
 ---
 
 ## Motivation ✨
