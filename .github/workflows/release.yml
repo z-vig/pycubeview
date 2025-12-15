@@ -59,11 +59,58 @@ jobs:
 
       - name: Build with Nuitka (Windows)
         if: runner.os == 'Windows'
+        shell: powershell
         run: |
-          python -m nuitka src/pycubeview/main.py ^
-            --enable-plugin=pyqt6 ^
-            --mode=standalone ^
-            --output-dir=dist
+          python -m nuitka src/pycubeview/main.py `
+            --enable-plugin=pyqt6 `
+            --mode=standalone `
+            --output-dir=dist `
+            --output-filename=PyCubeView
+
+      - name: Build with Nuitka (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          python -m nuitka src/pycubeview/main.py \
+            --enable-plugin=pyqt6 \
+            --mode=standalone \
+            --output-dir=dist \
+            --output-filename=PyCubeView
+
+      - name: Build with Nuitka (macOS)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          python -m nuitka src/pycubeview/main.py \
+            --enable-plugin=pyqt6 \
+            --mode=standalone \
+            --output-dir=dist \
+            --output-filename=PyCubeView
+
+      - name: Package Build (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          Compress-Archive -Path dist/PyCubeView.dist -DestinationPath PyCubeView-windows.zip
+
+      - name: Package Build (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          tar -czf PyCubeView-linux.tar.gz -C dist PyCubeView.dist
+
+      - name: Package Build (macOS)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          tar -czf PyCubeView-macos.tar.gz -C dist PyCubeView.dist
 
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            PyCubeView-*.zip
+            PyCubeView-*.tar.gz
+
+
+
