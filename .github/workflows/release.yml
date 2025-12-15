@@ -64,6 +64,7 @@ jobs:
         shell: powershell
         run: |
           python -m nuitka src/pycubeview/main.py `
+            --module=pycubeview.main `
             --enable-plugin=pyqt6 `
             --mode=standalone `
             --output-dir=dist `
@@ -75,6 +76,7 @@ jobs:
         shell: bash
         run: |
           python -m nuitka src/pycubeview/main.py \
+            --module=pycubview.main \
             --enable-plugin=pyqt6 \
             --mode=standalone \
             --output-dir=dist \
@@ -85,6 +87,7 @@ jobs:
         shell: bash
         run: |
           python -m nuitka src/pycubeview/main.py \
+            --module=pycubview.main \
             --enable-plugin=pyqt6 \
             --mode=standalone \
             --output-dir=dist \
