@@ -66,6 +66,7 @@ jobs:
             --enable-plugin=pyqt6 `
             --mode=standalone `
             --output-dir=dist
+            --assume-yes-for-downloads
 
       - name: Build with Nuitka (Linux)
         if: runner.os == 'Linux'
