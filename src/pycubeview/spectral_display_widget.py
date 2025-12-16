@@ -272,6 +272,9 @@ class SpectralDisplayWidget(QWidget):
             self.edit_win.close()
             self._editing = False
             self.data_removed.emit(plot.name())
+            for i in self.save_cache:
+                if i.name == plot.name():
+                    self.save_cache.remove(i)
 
         self.edit_win.spectrum_deleted.connect(delete_spectrum)
 
