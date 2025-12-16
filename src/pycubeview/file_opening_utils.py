@@ -27,7 +27,6 @@ import numpy as np
 import rasterio as rio  # type: ignore
 import spectralio as sio
 import re
-import pandas as pd
 
 
 # ---- Handling Wavelength Data Files ----
@@ -100,10 +99,13 @@ def open_csv_file(path: Path) -> np.ndarray:
     Opens a csv file where there is one row of headers and at least one is
     "wavelength". Make sure there are no spaces around the commas!
     """
-    df = pd.read_csv(path)
-    wvl_col_idx = [i.lower() for i in df.columns.to_list()].index("wavelength")
-    wvl = df.iloc[:, wvl_col_idx].to_numpy()
-    return wvl
+    arr = np.loadtxt(path, delimiter=",", dtype=str)
+    idx = np.argwhere(np.char.lower(arr[0, :]) == "wavelength")
+    if idx.size == 0:
+        raise ValueError("No Wavelength column exists.")
+    if idx.size > 1:
+        raise ValueError("Multiple Wavelength columns exist.")
+    return arr[1:, idx[0][0]].astype(float)
 
 
 # Mapping from lowercase string file extensions to handler functions.

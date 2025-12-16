@@ -65,14 +65,14 @@ jobs:
         env:
           PYTHONPATH: src
         run: |
-          $cmapData = python -c "import cmap, os; print(os.path.join(os.path.dirname(cmap.__file__), 'data'))"
           python -m nuitka src/pycubeview/main.py `
             --enable-plugin=pyqt6 `
             --mode=standalone `
             --output-dir=dist `
             --assume-yes-for-downloads `
             --include-package=pycubeview `
-            --include-data-dir="$cmapData=cmap/data"
+            --include-package=cmap.data `
+            --include-package-data=cmap
 
       - name: Build with Nuitka (Linux)
         if: runner.os == 'Linux'
