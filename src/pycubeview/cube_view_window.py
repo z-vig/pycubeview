@@ -74,9 +74,10 @@ class CubeViewWindow(BaseWindow):
 
         # ---- Linking Image and Spectral Display ----
         def intercept_pixel_coord(y: int, x: int):
+            c = self.qcmap(self.state.color_cycle_pos).rgba8
             spectrum_save = self.spectral_display.add_spectrum(
                 (y, x),
-                color=self.qcmap.to_pyqtgraph()[self.state.color_cycle_pos],  # type: ignore  # noqa
+                color=QtGui.QColor(c.r, c.g, c.b, int(c.a * 255)),
             )
             self.polygon_cache[spectrum_save.name] = None
             self.state.color_cycle_pos += 1

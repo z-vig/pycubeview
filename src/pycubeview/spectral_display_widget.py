@@ -4,7 +4,7 @@ from pathlib import Path
 
 # PySide6 Imports
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QFileDialog
-from PySide6.QtGui import QAction
+from PySide6.QtGui import QAction, QColor
 from PySide6.QtCore import Signal
 
 # Dependencies
@@ -120,7 +120,7 @@ class SpectralDisplayWidget(QWidget):
     def add_spectrum(
         self,
         coord: tuple[int, int],
-        color: pg.Color = pg.Color((200, 200, 200)),
+        color: QColor = QColor(200, 200, 200, 255),
     ) -> sio.PointSpectrum1D:
         current_save = sio.PointSpectrum1D.from_pixel_coord(
             0, 0, spec1d=sio.Spectrum1D.empty()
@@ -163,7 +163,7 @@ class SpectralDisplayWidget(QWidget):
         self,
         coords: np.ndarray,
         display_mean: bool = True,
-        single_color: pg.Color = pg.Color((200, 200, 200)),
+        single_color: QColor = QColor(200, 200, 200, 255),
         color_map: SequentialColorMap = "crameri:hawaii",
         cache_all: bool = False,
     ) -> sio.SpectrumGroup:
@@ -203,9 +203,9 @@ class SpectralDisplayWidget(QWidget):
         current_save.spectra = spectra_list
         current_save.spectra_pts = spectra_pts_list
         current_save.wavelength = _wvl
-        current_save.resolve_polygon()
 
         if display_mean:
+            current_save.resolve_polygon()
             errbars = pg.ErrorBarItem(
                 x=self.wvl, y=mean_spectrum, height=2 * err_spectrum, beam=10
             )
