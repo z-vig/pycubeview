@@ -7,7 +7,7 @@
 # nuitka-project: --include-package=rasterio
 # nuitka-project: --include-package-data=rasterio
 # nuitka-project: --include-module=PySide6.QtOpenGL
-
+# nuitka-project: --assume-yes-for-downloads
 # nuitka-project: --output-dir=dist
 # nuitka-project: --jobs=2
 # nuitka-project: --lto=no
