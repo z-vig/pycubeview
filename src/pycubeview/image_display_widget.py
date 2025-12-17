@@ -1,9 +1,9 @@
 # Built-Ins
 from pathlib import Path
 
-# PyQt6 Imports
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QApplication
-from PyQt6.QtCore import pyqtSignal, Qt, QPointF
+# PySide6 Imports
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QApplication
+from PySide6.QtCore import Signal, Qt, QPointF
 
 # Dependencies
 import pyqtgraph as pg  # type: ignore
@@ -21,11 +21,11 @@ from .utils import get_bresenham_line
 
 
 class ImagePickerWidget(QWidget):
-    mouse_moved = pyqtSignal(float, float, PixelValue)
-    pixel_picked = pyqtSignal(int, int)
-    lasso_finished = pyqtSignal(np.ndarray, np.ndarray)
-    line_roi_started = pyqtSignal()
-    line_roi_updated = pyqtSignal(np.ndarray)
+    mouse_moved = Signal(float, float, PixelValue)
+    pixel_picked = Signal(int, int)
+    lasso_finished = Signal(np.ndarray, np.ndarray)
+    line_roi_started = Signal()
+    line_roi_updated = Signal(np.ndarray)
 
     def __init__(
         self,

@@ -6,10 +6,16 @@ from pathlib import Path
 import pyqtgraph as pg  # type: ignore
 import numpy as np
 
-# PyQt6 Imports
-from PyQt6.QtWidgets import QMainWindow, QStatusBar, QMenu, QFileDialog, QLabel
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtGui import QAction
+# PySide6 Imports
+from PySide6.QtWidgets import (
+    QMainWindow,
+    QStatusBar,
+    QMenu,
+    QFileDialog,
+    QLabel,
+)
+from PySide6.QtCore import Signal
+from PySide6.QtGui import QAction
 
 # Local Imports
 from .status_indicator import BaseStatusIndicator
@@ -42,7 +48,7 @@ class MasterGUIState:
 
 
 class BaseWindow(QMainWindow):
-    base_data_dir_updated = pyqtSignal()
+    base_data_dir_updated = Signal()
 
     def __init__(self) -> None:
         super().__init__()
@@ -122,7 +128,7 @@ class BaseWindow(QMainWindow):
     def set_base_directory(self) -> None:
         base_dir_str = QFileDialog.getExistingDirectory(
             caption="Select Data Directory.",
-            directory=str(self.state.base_data_dir),
+            dir=str(self.state.base_data_dir),
         )
         if base_dir_str == "":
             return

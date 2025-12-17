@@ -2,10 +2,10 @@
 from typing import Optional
 from pathlib import Path
 
-# PyQt6 Imports
-from PyQt6 import QtWidgets as qtw
-from PyQt6 import QtGui
-from PyQt6 import QtCore
+# PySide6 Imports
+from PySide6 import QtWidgets as qtw
+from PySide6 import QtGui
+from PySide6 import QtCore
 
 # Dependencies
 from pyqtgraph.dockarea import Dock, DockArea  # type: ignore
@@ -269,7 +269,7 @@ class CubeViewWindow(BaseWindow):
                 "Spectral Cube Files (*.spcub *.geospcub);;"
                 "Rasterio-Compatible Files (*.bsq *.img *.tif)"
             ),
-            directory=str(self.state.base_data_dir),
+            dir=str(self.state.base_data_dir),
         )
         if fp_str == "":
             return
@@ -284,7 +284,7 @@ class CubeViewWindow(BaseWindow):
                 "Spectral Cube Files (*.spcub *.geospcub);;"
                 "Rasterio-Compatible Files (*.bsq *.img *.tif)"
             ),
-            directory=str(self.state.base_data_dir),
+            dir=str(self.state.base_data_dir),
         )
         if cube_fp_str == "":
             return
@@ -303,7 +303,7 @@ class CubeViewWindow(BaseWindow):
                     "Wavelength File (*.wvl);;ENVI Header File (*.hdr);;"
                     "Text-Based Files (*.txt *.csv)"
                 ),
-                directory=str(self.state.base_data_dir),
+                dir=str(self.state.base_data_dir),
             )
             wvl_fp = Path(wvl_fp_str)
             wvl = open_wvl(wvl_fp)
@@ -338,7 +338,7 @@ class CubeViewWindow(BaseWindow):
         geodata_fp_str, fp_type = qtw.QFileDialog.getOpenFileName(
             caption="Select Geodata File",
             filter="Geodata File (*.geodata)",
-            directory=str(self.state.base_data_dir),
+            dir=str(self.state.base_data_dir),
         )
         if geodata_fp_str == "":
             return

@@ -1,7 +1,7 @@
-# PyQt6 Imports
-from PyQt6 import QtWidgets as qtw
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtGui import QAction
+# PySide6 Imports
+from PySide6 import QtWidgets as qtw
+from PySide6.QtCore import Signal
+from PySide6.QtGui import QAction
 
 # Dependencies
 import pyqtgraph as pg  # type: ignore
@@ -14,8 +14,8 @@ from .spectral_display_widget import SpectralDisplayWidget
 
 
 class LineRoiWindow(qtw.QMainWindow):
-    updated = pyqtSignal()
-    closed = pyqtSignal()
+    updated = Signal()
+    closed = Signal()
 
     def __init__(
         self,

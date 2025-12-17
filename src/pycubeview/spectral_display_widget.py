@@ -2,10 +2,10 @@
 from functools import partial
 from pathlib import Path
 
-# PyQt6 Imports
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QFileDialog
-from PyQt6.QtGui import QAction
-from PyQt6.QtCore import pyqtSignal
+# PySide6 Imports
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QFileDialog
+from PySide6.QtGui import QAction
+from PySide6.QtCore import Signal
 
 # Dependencies
 import pyqtgraph as pg  # type: ignore
@@ -59,12 +59,12 @@ class SpectralDisplayWidget(QWidget):
             - (None)
     """
 
-    data_added = pyqtSignal(pg.PlotDataItem, pg.ErrorBarItem)
-    data_updated = pyqtSignal(pg.PlotDataItem, pg.ErrorBarItem, str, str)
-    data_removed = pyqtSignal(str)
-    geodata_linked = pyqtSignal()
-    bulk_data_added = pyqtSignal(list)
-    plot_reset = pyqtSignal()
+    data_added = Signal(pg.PlotDataItem, pg.ErrorBarItem)
+    data_updated = Signal(pg.PlotDataItem, pg.ErrorBarItem, str, str)
+    data_removed = Signal(str)
+    geodata_linked = Signal()
+    bulk_data_added = Signal(list)
+    plot_reset = Signal()
 
     def __init__(self) -> None:
         super().__init__()
@@ -292,7 +292,7 @@ class SpectralDisplayWidget(QWidget):
 
     def save_plot(self) -> None:
         qt_save_dir = QFileDialog.getExistingDirectory(
-            caption="Select Save Directory", directory=str(self.base_data_dir)
+            caption="Select Save Directory", dir=str(self.base_data_dir)
         )
         if qt_save_dir == "":
             return

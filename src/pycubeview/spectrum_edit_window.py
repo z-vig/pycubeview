@@ -1,12 +1,12 @@
-from PyQt6 import QtWidgets as qtw
-from PyQt6.QtCore import pyqtSignal
+from PySide6 import QtWidgets as qtw
+from PySide6.QtCore import Signal
 from pyqtgraph.graphicsItems.PlotDataItem import PlotDataItem  # type: ignore
 
 
 class SpectrumEditWindow(qtw.QWidget):
-    name_changed = pyqtSignal(str, str)
-    spectrum_deleted = pyqtSignal()
-    closed = pyqtSignal()
+    name_changed = Signal(str, str)
+    spectrum_deleted = Signal()
+    closed = Signal()
 
     def __init__(self, edit_spec: PlotDataItem):
         super().__init__()

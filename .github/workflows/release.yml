@@ -28,6 +28,14 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Cache Nuitka
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.os == 'Windows' && env:LOCALAPPDATA + '\Nuitka' || '~/.cache/Nuitka' }}
+          key: nuitka-${{ runner.os }}-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            nuitka-${{ runner.os }}-
+
       - name: Install System Dependencies
         if: runner.os == 'Linux'
         run: |
@@ -65,14 +73,7 @@ jobs:
         env:
           PYTHONPATH: src
         run: |
-          python -m nuitka src/pycubeview/main.py `
-            --enable-plugin=pyqt6 `
-            --mode=standalone `
-            --output-dir=dist `
-            --assume-yes-for-downloads `
-            --include-package=pycubeview `
-            --include-package=cmap.data `
-            --include-package-data=cmap
+          python -m nuitka src/pycubeview/main.py
 
       - name: Build with Nuitka (Linux)
         if: runner.os == 'Linux'
@@ -80,13 +81,7 @@ jobs:
         env:
           PYTHONPATH: src
         run: |
-          CMAP_DATA=$(python -c "import cmap, os; print(os.path.join(os.path.dirname(cmap.__file__), 'data'))")
-          python -m nuitka src/pycubeview/main.py \
-            --enable-plugin=pyqt6 \
-            --mode=standalone \
-            --output-dir=dist \
-            --include-package=pycubeview \
-            --include-data-dir="$CMAP_DATA=cmap/data"
+          python -m nuitka src/pycubeview/main.py
 
       - name: Build with Nuitka (macOS)
         if: runner.os == 'macOS'
@@ -94,13 +89,7 @@ jobs:
         env:
           PYTHONPATH: src
         run: |
-          CMAP_DATA=$(python -c "import cmap, os; print(os.path.join(os.path.dirname(cmap.__file__), 'data'))")
-          python -m nuitka src/pycubeview/main.py \
-            --enable-plugin=pyqt6 \
-            --mode=standalone \
-            --output-dir=dist \
-            --include-package=pycubeview \
-            --include-data-dir="CMAP_DATA=cmap/data"
+          python -m nuitka src/pycubeview/main.py
 
       - name: Package Build (Windows)
         if: runner.os == 'Windows'

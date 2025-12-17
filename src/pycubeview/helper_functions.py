@@ -1,8 +1,8 @@
 # Dependencies
 import numpy as np
 
-# PyQt6 Imports
-from PyQt6.QtWidgets import QApplication
+# PySide6 Imports
+from PySide6.QtWidgets import QApplication
 
 # Local Imports
 from .cube_view_window import CubeViewWindow
