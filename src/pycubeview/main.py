@@ -8,13 +8,10 @@
 # nuitka-project: --include-package-data=rasterio
 # nuitka-project: --include-module=PySide6.QtOpenGL
 
-# For Local Testing
-# nuitka-project: --output-dir=build
-# nuitka-project: --jobs=8
+# nuitka-project: --output-dir=dist
+# nuitka-project: --jobs=2
 # nuitka-project: --lto=no
 # nuitka-project: --nofollow-import-to=*.tests
-
-# Make sure to add back in output dir is dist
 
 # PySide6 Imports
 from PySide6.QtWidgets import QApplication
