@@ -20,7 +20,7 @@ from PySide6.QtGui import QAction
 # Local Imports
 from .status_indicator import BaseStatusIndicator
 
-PKG_VERSION = "0.2.0"
+PKG_VERSION = "0.3.0"
 
 
 @dataclass
@@ -67,6 +67,13 @@ class BaseWindow(QMainWindow):
         self.save_spectra = QAction("Save Spectrum Plot", self)
         self.save_spectra.setStatusTip("Save 0 spectra currently in memory.")
 
+        self.show_errorbars = QAction("Show Errorbars", self)
+        self.show_errorbars.setCheckable(True)
+        self.show_errorbars.setChecked(True)
+        self.show_errorbars.setStatusTip(
+            "Shows/Hides Errorbars on Spectral Plots."
+        )
+
         self.link_geodata_action = QAction("Link Geodata", self)
         self.link_geodata_action.setStatusTip(
             "Link Geolocation Data from a file. (No Geodata has been linked"
@@ -94,6 +101,7 @@ class BaseWindow(QMainWindow):
             menubar.addMenu(self.spectrum_menu)
             self.spectrum_menu.addAction(self.clear_spectra)
             self.spectrum_menu.addAction(self.save_spectra)
+            self.spectrum_menu.addAction(self.show_errorbars)
 
             self.geo_menu = QMenu(title="Geo")
             menubar.addMenu(self.geo_menu)

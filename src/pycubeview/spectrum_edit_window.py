@@ -39,7 +39,7 @@ class SpectrumEditWindow(qtw.QWidget):
     def delete_spectrum(self):
         self.spectrum_deleted.emit()
 
-    def closeEvent(self, a0):
+    def closeEvent(self, event):
         self.closed.emit()
-        if a0 is not None:
-            a0.accept()
+        if event is not None:
+            event.accept()

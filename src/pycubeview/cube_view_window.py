@@ -65,6 +65,9 @@ class CubeViewWindow(BaseWindow):
         self.clear_spectra.triggered.connect(self.empty_cache)
         self.save_spectra.triggered.connect(self.spectral_display.save_plot)
         self.link_geodata_action.triggered.connect(self.link_geodata)
+        self.show_errorbars.toggled.connect(
+            self.spectral_display.toggle_errorbars
+        )
 
         # ---- Auxillary Spectral Viewing Window ----
         self.aux_spec_display = LineRoiWindow()

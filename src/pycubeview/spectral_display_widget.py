@@ -9,6 +9,8 @@ from PySide6.QtCore import Signal
 
 # Dependencies
 import pyqtgraph as pg  # type: ignore
+from pyqtgraph.graphicsItems.PlotCurveItem import PlotCurveItem  # type: ignore
+from pyqtgraph.GraphicsScene.mouseEvents import MouseClickEvent  # type: ignore
 import numpy as np
 import cmap
 import spectralio as sio
@@ -81,11 +83,13 @@ class SpectralDisplayWidget(QWidget):
         self.geodata_fp: Path | None = None
 
         self.save_cache: list[sio.PointSpectrum1D | sio.SpectrumGroup] = []
+        self.plot_cache: list[tuple[pg.PlotDataItem, pg.ErrorBarItem]] = []
 
         self.wvl = np.empty((0), dtype=np.float32)
         self.cube = np.empty((0, 0, 0), dtype=np.float32)
         self._count = 0
         self._editing = False
+        self._errbars_shown = True
 
         layout = QVBoxLayout()
         layout.addWidget(self.spec_plot)
@@ -147,10 +151,11 @@ class SpectralDisplayWidget(QWidget):
         self.data_added.emit(spec_item, errbars)
 
         spec_item.sigClicked.connect(
-            partial(self.edit_spectrum, spec_item, errbars)
+            partial(self.edit_spectrum, plot=spec_item, err=errbars)
         )
 
         self.save_cache.append(current_save)
+        self.plot_cache.append((spec_item, errbars))
 
         return current_save
 
@@ -205,15 +210,18 @@ class SpectralDisplayWidget(QWidget):
                 x=self.wvl, y=mean_spectrum, height=2 * err_spectrum, beam=10
             )
 
+            errbars.setVisible(self._errbars_shown)
+
             self.spec_plot.addItem(spec_item)
             self.spec_plot.addItem(errbars)
             self.data_added.emit(spec_item, errbars)
 
             spec_item.sigClicked.connect(
-                partial(self.edit_spectrum, spec_item, errbars)
+                partial(self.edit_spectrum, plot=spec_item, err=errbars)
             )
 
             self.save_cache.append(current_save)
+            self.plot_cache.append((spec_item, errbars))
 
         else:
             self.spec_legend.setVisible(False)
@@ -242,7 +250,14 @@ class SpectralDisplayWidget(QWidget):
 
         return current_save
 
-    def edit_spectrum(self, plot: pg.PlotDataItem, err: pg.ErrorBarItem):
+    def edit_spectrum(
+        self,
+        _curve_item: PlotCurveItem,
+        _mouse_click: MouseClickEvent,
+        *,
+        plot: pg.PlotDataItem,
+        err: pg.ErrorBarItem,
+    ):
         if self._editing:
             print(
                 "Close the current spectrum edit window to edit another"
@@ -344,3 +359,8 @@ class SpectralDisplayWidget(QWidget):
                 return
             self.current_plot_name = txt
             item.setTitle(txt)
+
+    def toggle_errorbars(self) -> None:
+        self._errbars_shown = not self._errbars_shown
+        for i in self.plot_cache:
+            i[1].setVisible(not i[1].isVisible())
