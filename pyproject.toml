@@ -1,6 +1,6 @@
 [project]
 name = "pycubeview"
-version = "0.3.1"
+version = "1.0.0"
 description = "A Flexible and Interactive Spectral (and more!) Image Viewer for Python"
 authors = [
     {name = "Z.M. Vig",email = "zvig@umd.edu"}
