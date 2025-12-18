@@ -99,7 +99,7 @@ jobs:
         if: runner.os == 'macOS'
         shell: bash
         run: |
-          mkdir -p CubeView.app/Contents{MacOS,Resources}
+          mkdir -p CubeView.app/Contents/{MacOS,Resources}
           cp macos_launcher.sh CubeView.app/Contents/MacOS
           cp Info.plist CubeView.app/Contents
           cp -R main.dist CubeView.app/Contents/Resources/main.dist
