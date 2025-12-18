@@ -1,7 +1,7 @@
 # flake8: noqa
 
 # Compilation mode, support OS-specific options
-# nuitka-project-if: {OS} in ("macOS"):
+# nuitka-project-if: {OS} in ("MacOS"):
 #   nuitka-project: --mode=standalone
 #   nuitka-project: --macos-app-icon=src/pycubeview/icons/PyCubeView_logo_mac.icns
 # nuitka-project-if: {OS} in ("Windows"):
