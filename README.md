@@ -2,7 +2,7 @@
 
 A Flexible and Interactive Spectral (and more!) Image Viewer for Python
 
-[![Unit Tests](https://github.com/z-vig/pycubeview/actions/workflows/ci.yml/badge.svg)](https://github.com/z-vig/pycubeview/actions/workflows/ci.yml)
+[![Unit Tests](https://github.com/z-vig/pycubeview/actions/workflows/ci.yml/badge.svg)](https://github.com/z-vig/pycubeview/actions/workflows/ci.yml) [![License: MIT](https://cdn.prod.website-files.com/5e0f1144930a8bc8aace526c/65dd9eb5aaca434fac4f1c34_License-MIT-blue.svg)](/LICENSE)
 ---
 
 ## Motivation ✨
@@ -23,9 +23,14 @@ in a third dimension. Below are listed some examples of scientific data cubes:
 - General Vector Fields
 - And Many More!
 
-
 ## Installation ⬇️
 
+### GUI Application 💻
+To use the GUI Application, download PyCubeView **[here](https://github.com/z-vig/pycubeview/releases/latest)**!
+
+Support is available for Linux (Ubuntu Distribution), MacOS and Windows.
+
+### Python API 🐍
 `pycubeview` can be directly install from the Python Package Index using `pip`.
 
 ```bash
@@ -34,6 +39,10 @@ pip install pycubeview
 
 ## Usage ⚙️
 
+### GUI Application 💻
+
+
+### Python API 🐍
 The basic CubeView GUI can be opened directly from the command line by ensuring you are in a python environment that has `pycubeview` installed and running
 
 ```bash

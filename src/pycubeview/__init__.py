@@ -1,11 +1,16 @@
 """
-# `specview`
+# `pycubeview`
 
 A Hyperspectral Image Viewer for Python
 
 ---
 
 ## Example
+
+```python
+from pycubeview import open_cubeview
+open_cubeview(wvl_fp, image_fp, cube_fp, base_dir_fp)
+```
 """
 
 from .cube_view_window import CubeViewWindow

@@ -1,12 +1,29 @@
+# flake8: noqa
+
 # Compilation mode, support OS-specific options
-# nuitka-project: --mode=standalone
+# nuitka-project-if: {OS} in ("macOS"):
+#   nuitka-project: --mode=app
+#   nuitka-project: --macos-app-icon=src\pycubeview\icons\PyCubeView_logo.png
+# nuitka-project-if: {OS} in ("Windows"):
+#   nuitka-project: --mode=standalone
+#   nuitka-project: --windows-icon-from-ico=src\pycubeview\icons\PyCubeView_logo.png
+# nuitka-project-if: {OS} in ("Linux"):
+#   nuitka-project: --mode=standalone
+#   nuitka-project: --linux-icon=src\pycubeview\icons\PyCubeView_logo.png
+
+# All-OS options
 # nuitka-project: --enable-plugin=pyside6
+# nuitka-project: --output-filename=cubeview.exe
+
+# Including data and packages
 # nuitka-project: --include-package=pycubeview
 # nuitka-project: --include-package=cmap.data
 # nuitka-project: --include-package-data=cmap
 # nuitka-project: --include-package=rasterio
 # nuitka-project: --include-package-data=rasterio
 # nuitka-project: --include-module=PySide6.QtOpenGL
+
+# Speedup Options
 # nuitka-project: --assume-yes-for-downloads
 # nuitka-project: --output-dir=dist
 # nuitka-project: --jobs=2

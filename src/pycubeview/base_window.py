@@ -25,6 +25,37 @@ PKG_VERSION = "1.0.0"
 
 @dataclass
 class MasterGUIState:
+    """
+    Master GUI state for the CubeView window.
+
+    Attributes
+    ----------
+        spectrum_cache: dict
+            A cache mapping spectrum identifiers to their plot data items
+            and error bar items.
+        spectrum_edit_open: bool
+            Indicates whether the spectrum edit window is open.
+        line_roi_cache: list
+            A list of plot data items representing line ROIs.
+        line_roi_scatter_plot: pg.ScatterPlotItem
+            A scatter plot item for line ROIs.
+        color_cycle_pos: int
+            The current position in the color cycle for plotting.
+        drawing: bool
+            Indicates whether drawing mode is active.
+        cube_attached: bool
+            Indicates whether a spectral cube is attached.
+        geodata_attached: bool
+            Indicates whether geolocation data is attached.
+        base_data_dir: Path
+            The base directory for data operations.
+
+    Methods
+    -------
+        initial() -> MasterGUIState
+            Creates an initial state with default values.
+    """
+
     spectrum_cache: dict[str, tuple[pg.PlotDataItem, pg.ErrorBarItem]]
     spectrum_edit_open: bool
     line_roi_cache: list[pg.PlotDataItem]
@@ -48,13 +79,28 @@ class MasterGUIState:
 
 
 class BaseWindow(QMainWindow):
+    """
+    Base Window class for CubeView application.
+
+    Signals
+    -------
+    base_data_dir_updated()
+        Emitted when the base data directory is updated.
+    """
+
     base_data_dir_updated = Signal()
 
     def __init__(self) -> None:
+        """
+        Initialize the BaseWindow with menus, status bar, and actions.
+        """
+        # Initialize the QMainWindow
         super().__init__()
 
+        # Initialize the Master GUI State
         self.state = MasterGUIState.initial()
 
+        # ---- Setting up Menus and Actions ----
         self.open_cube = QAction("Open Spectral Cube", self)
         self.open_cube.setStatusTip("Open a new spectral cube.")
 
@@ -86,6 +132,7 @@ class BaseWindow(QMainWindow):
             f" Current: {self.state.base_data_dir}"
         )
 
+        # ---- Setting up Menu Bar ----
         menubar = self.menuBar()
         if menubar is not None:
             self.file_menu = QMenu(title="File")
@@ -126,19 +173,26 @@ class BaseWindow(QMainWindow):
         self.set_data_directory.triggered.connect(self.set_base_directory)
 
     def set_window_size(self, image: np.ndarray) -> None:
+        """Set the window size based on the image dimensions."""
         if image.shape[0] > image.shape[1]:
-            self.resize(600, 800)
+            self.resize(600, 800)  # Portrait
         elif image.shape[1] > image.shape[0]:
-            self.resize(800, 600)
+            self.resize(800, 600)  # Landscape
         else:
-            self.resize(600, 600)
+            self.resize(600, 600)  # Square
 
     def set_base_directory(self) -> None:
+        """Open a dialog to set the base data directory."""
+        # Open directory selection dialog
         base_dir_str = QFileDialog.getExistingDirectory(
             caption="Select Data Directory.",
             dir=str(self.state.base_data_dir),
         )
+
+        # If no directory selected, return
         if base_dir_str == "":
             return
+
+        # Update state and emit signal
         self.state.base_data_dir = Path(base_dir_str)
         self.base_data_dir_updated.emit()
