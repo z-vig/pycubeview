@@ -1,16 +1,4 @@
-# flake8: noqa
-
-# Compilation mode, support OS-specific options
-# nuitka-project-if: {OS} in ("MacOS"):
-#   nuitka-project: --mode=standalone
-#   nuitka-project: --macos-app-icon=src/pycubeview/icons/PyCubeView_logo_mac.icns
-# nuitka-project-if: {OS} in ("Windows"):
-#   nuitka-project: --mode=standalone
-#   nuitka-project: --windows-icon-from-ico=src/pycubeview/icons/PyCubeView_logo.ico
-# nuitka-project-if: {OS} in ("Linux"):
-#   nuitka-project: --mode=standalone
-
-# All-OS options
+# nuitka-project: --mode=standalone
 # nuitka-project: --enable-plugin=pyside6
 # nuitka-project: --output-filename=cubeview
 

@@ -65,7 +65,7 @@ jobs:
         env:
           PYTHONPATH: src
         run: |
-          python -m nuitka src/pycubeview/main.py
+          python -m nuitka src/pycubeview/main.py --windows-icon-from-ico=src/pycubeview/icons/PyCubeView_logo.ico
 
       - name: Build with Nuitka (Linux)
         if: runner.os == 'Linux'
@@ -81,7 +81,7 @@ jobs:
         env:
           PYTHONPATH: src
         run: |
-          python -m nuitka src/pycubeview/main.py
+          python -m nuitka src/pycubeview/main.py --macos-app-icon=src/pycubeview/icons/PyCubeView_logo_mac.icns
 
       - name: Package Build (Windows)
         if: runner.os == 'Windows'
