@@ -20,7 +20,7 @@ from PySide6.QtGui import QAction
 # Local Imports
 from .status_indicator import BaseStatusIndicator
 
-PKG_VERSION = "0.3.0"
+PKG_VERSION = "0.3.1"
 
 
 @dataclass
