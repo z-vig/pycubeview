@@ -102,7 +102,7 @@ jobs:
           mkdir -p CubeView.app/Contents/{MacOS,Resources}
           cp macos_launcher.sh CubeView.app/Contents/MacOS
           cp Info.plist CubeView.app/Contents
-          cp -R main.dist CubeView.app/Contents/Resources/main.dist
+          cp -R dist/main.dist CubeView.app/Contents/Resources/main.dist
           chmod +x CubeView.app/Contents/MacOS/macos_launcher.sh
           chmod +x CubeView.app/Contents/Resources/main.dist/cubeview
           zip -r PyCubeView-macos.zip CubeView.app
