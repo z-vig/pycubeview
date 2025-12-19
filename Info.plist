@@ -17,5 +17,8 @@
 
     <key>CFBundlePackageType</key>
     <string>APPL</string>
+
+    <key>CFBundleIconFile</key>
+    <string>iconfile</string>
 </dict>
 </plist>
