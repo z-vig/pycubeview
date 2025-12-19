@@ -30,6 +30,21 @@ To use the GUI Application, download PyCubeView **[here](https://github.com/z-vi
 
 Support is available for Linux (Ubuntu Distribution), MacOS and Windows.
 
+For Windows Users:
+1) Download the .zip file and extract all files
+2) The cubeview.exe file is found at: PyCubeView-windows > main.dist > cubeview.exe
+
+For Mac Users:
+1) Downloading the .zip file will automatically give you a .app file
+2) PyCubeView currently ships unsigned (because that costs money 💲), so you
+   must change the permissions on the file before you run it.
+3) From within the directory you downloaded the file to, run:
+
+```bash
+xattr -d com.apple.quarantine CubeView.app
+```
+4) You can now double-click to run the app
+
 ### Python API 🐍
 `pycubeview` can be directly install from the Python Package Index using `pip`.
 

@@ -99,7 +99,13 @@ jobs:
         if: runner.os == 'macOS'
         shell: bash
         run: |
-          tar -czf PyCubeView-macos.tar.gz -C dist main.dist
+          mkdir -p CubeView.app/Contents/{MacOS,Resources}
+          cp macos_launcher.sh CubeView.app/Contents/MacOS
+          cp Info.plist CubeView.app/Contents
+          cp -R dist/main.dist CubeView.app/Contents/Resources/main.dist
+          chmod +x CubeView.app/Contents/MacOS/macos_launcher.sh
+          chmod +x CubeView.app/Contents/Resources/main.dist/cubeview
+          zip -r PyCubeView-macos.zip CubeView.app
 
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v2
