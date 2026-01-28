@@ -3,6 +3,7 @@ from pathlib import Path
 
 # PySide6 Imports
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QApplication
+from PySide6.QtGui import QAction
 from PySide6.QtCore import Signal, Qt, QPointF
 
 # Dependencies
@@ -81,6 +82,14 @@ class ImagePickerWidget(QWidget):
         self.imview.getView().addItem(self.line_roi)
         self.line_roi.setVisible(False)
 
+        # ---- Adding to Context Menu ----
+        context_menu = self.imview.getView().menu
+        if context_menu is not None:
+            self.open_spectral_display_action = QAction(
+                "Connect New Spectral Display", self
+            )
+            context_menu.addAction(self.open_spectral_display_action)
+
         layout = QVBoxLayout()
         layout.addWidget(self.imview)
         self.setLayout(layout)
@@ -133,7 +142,9 @@ class ImagePickerWidget(QWidget):
         else:
             return
 
-    def pixel_select(self, mouse_event) -> None:
+    def pixel_select(self, mouse_event: MouseClickEvent) -> None:
+        if mouse_event.button() != Qt.MouseButton.LeftButton:
+            return
         mods = QApplication.keyboardModifiers()
         if (
             mods == Qt.KeyboardModifier.ControlModifier
