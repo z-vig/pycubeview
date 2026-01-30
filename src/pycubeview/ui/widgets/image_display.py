@@ -22,8 +22,8 @@ from PySide6.QtCore import Signal
 class BaseImageDisplay(QWidget):
     def __init__(
         self,
+        display_name: str,
         parent: QWidget | None = None,
-        display_name: str = "ImageDisplay",
         image_cmap: SequentialColorMap = "matlab:gray",
     ):
         super().__init__()
@@ -121,7 +121,7 @@ class ImageDisplay(BaseImageDisplay):
         parent: QWidget | None = None,
         image_cmap: SequentialColorMap = "matlab:gray",
     ):
-        super().__init__(parent, display_name, image_cmap)
+        super().__init__(display_name, parent, image_cmap)
         self.pg_image_view.scene.sigMouseClicked.connect(  # type: ignore
             self._on_pixel_clicked
         )

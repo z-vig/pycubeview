@@ -1,3 +1,6 @@
+# Local Imports
+from pycubeview.data.valid_colormaps import QualitativeColorMap
+
 # Dependencies
 import pyqtgraph as pg  # type: ignore
 import numpy as np
@@ -8,7 +11,7 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout
 
 class BaseMeasurementAxisDisplay(QWidget):
     def __init__(
-        self, measurement_name: str, parent: QWidget | None = None
+        self, measurement_name: str, parent: QWidget | None = None, measurement_cmap: QualitativeColorMap
     ) -> None:
         super().__init__(parent)
         # ---- Adding attributes and properties ----
