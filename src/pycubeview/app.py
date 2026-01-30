@@ -24,7 +24,8 @@ def cubeview():
         "D:/moon_data/m3/Gruithuisen_Region/Gruithuisen_Mosaics/global_mode/"
     )
     controller.file.set_base_fp(fp=base_fp)
-    # controller.file.open_image(fp=Path(base_fp, "M3G_GDOMES_RFL.geospcub"))
+    controller.file.open_image(fp=Path(base_fp, "M3G_GDOMES_RFL.geospcub"))
+    controller.file.open_cube(fp=Path(base_fp, "M3G_GDOMES_RFL.geospcub"))
 
     # For Quick Dev
     # main = CubeViewWindow(

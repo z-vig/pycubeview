@@ -3,11 +3,14 @@ from dataclasses import dataclass, field
 from typing import Optional, Generic, TypeVar
 
 # Local Imports
-from pycubeview.cubeview_protocols import FileHandler, AppStateHandler
+from pycubeview.cubeview_protocols import (
+    FileHandler,
+    AppStateHandler,
+    MeasurementHandler,
+)
 
 # PySide 6 Imports
 from PySide6.QtGui import QAction
-from PySide6.QtWidgets import QWidget
 
 T = TypeVar("T")
 
@@ -19,7 +22,7 @@ class ActionSpec(Generic[T]):
     shortcut: Optional[str] = None
     _action: Optional[QAction] = None
 
-    def build(self, parent: QWidget, receiver: T) -> QAction:
+    def build(self, parent, receiver: T) -> QAction:
         if self._action is None:
             action = QAction(self.text, parent)
             if self.shortcut is not None:
@@ -52,5 +55,10 @@ class ActionCatalog:
     reset_data: ActionSpec[FileHandler] = field(
         default_factory=lambda: ActionSpec[FileHandler](
             text="Reset Data", callback_name="reset_data"
+        )
+    )
+    reset_cache: ActionSpec[MeasurementHandler] = field(
+        default_factory=lambda: ActionSpec[MeasurementHandler](
+            text="Reset Measurements", callback_name="reset_cache"
         )
     )

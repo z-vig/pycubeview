@@ -1,12 +1,13 @@
 # Built-Ins
-from typing import Protocol
+from typing import Protocol, Any, runtime_checkable
+from collections.abc import Callable
 from pathlib import Path
 
 # Local Imports
 from pycubeview.custom_types import CubeFileTypes
 from pycubeview.ui.widgets.image_display import ImageDisplay
 from pycubeview.ui.widgets.meas_display import MeasurementAxisDisplay
-from pycubeview.controllers.base_controller import AppState
+from pycubeview.global_app_state import AppState
 
 # Dependencies
 import numpy as np
@@ -15,13 +16,16 @@ import cmap
 
 # PySide6 Imports
 from PySide6.QtWidgets import QWidget, QMenu
-from PySide6.QtCore import Signal
+
+
+class SignalProtocol(Protocol):
+    def connect(self, slot: Callable[..., Any]) -> None: ...
 
 
 class CubeViewMainWindowProtocol(Protocol):
-    image_display_added: Signal
-    measurement_display_added: Signal
-    link_displays: Signal
+    image_display_added: Any  # Signal(ImageDisplay)
+    measurement_display_added: Any  # Signal(MeasurementDisplay)
+    link_displays: Any  # Signal(ImageDisplay, MeasurementDisplay)
     central_widget: QWidget
     image_displays: dict[str, ImageDisplay]
     meas_displays: dict[str, MeasurementAxisDisplay]
@@ -35,7 +39,7 @@ class CubeViewMainWindowProtocol(Protocol):
 
 
 class ImageDisplayProtocol(Protocol):
-    pixel_clicked: Signal
+    pixel_clicked: SignalProtocol
     pg_image_view: pg.ImageView
     display_colormap: cmap.Colormap
     name: str
@@ -44,11 +48,16 @@ class ImageDisplayProtocol(Protocol):
     def image_data(self) -> np.ndarray: ...
     @image_data.setter
     def image_data(self, value: np.ndarray) -> None: ...
+    @property
+    def image_size(self) -> np.ndarray: ...
 
 
+@runtime_checkable
 class MeasurementAxisDisplayProtocol(Protocol):
+    measurement_added: Any
     name: str
     pg_plot: pg.PlotWidget
+    plotted_count: int
 
     @property
     def cube(self) -> np.ndarray: ...
@@ -65,11 +74,17 @@ class MeasurementAxisDisplayProtocol(Protocol):
 class AppStateHandler(Protocol):
     app_state: AppState
 
-    def set_base_fp(self, *, fp: Path | None) -> None: ...
+    def set_base_fp(self, *, fp: Path | None = None) -> None: ...
 
 
 class FileHandler(Protocol):
-    def open_image(self) -> tuple[Path | None, CubeFileTypes | None]: ...
+    def open_image(
+        self, *, set_image: bool = True, fp: Path | None = None
+    ) -> tuple[Path | None, CubeFileTypes | None]: ...
     def open_meas(self) -> np.ndarray | None: ...
-    def open_cube(self) -> None: ...
+    def open_cube(self, *, fp: Path | None = None) -> None: ...
     def reset_data(self) -> None: ...
+
+
+class MeasurementHandler(Protocol):
+    def reset_cache(self) -> None: ...

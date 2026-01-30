@@ -1,7 +1,6 @@
 from pathlib import Path
 from typing import TypeAlias, Literal, TypeGuard
 
-
 PathLike: TypeAlias = Path | str
 
 MeasurementFileTypes: TypeAlias = Literal[".wvl", ".hdr", ".txt", ".csv"]

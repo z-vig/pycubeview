@@ -1,3 +1,6 @@
+# Built-Ins
+from dataclasses import dataclass
+
 # Dependencies
 import numpy as np
 import pyqtgraph as pg  # type: ignore
@@ -16,7 +19,16 @@ from pycubeview.validators.image_display_validators import (
 
 # PySide6 Imports
 from PySide6.QtWidgets import QWidget, QVBoxLayout
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Signal, Qt
+
+
+@dataclass
+class ImageClickData:
+    x_exact: float
+    y_exact: float
+    x_int: int
+    y_int: int
+    click_event: MouseClickEvent
 
 
 class BaseImageDisplay(QWidget):
@@ -26,7 +38,7 @@ class BaseImageDisplay(QWidget):
         parent: QWidget | None = None,
         image_cmap: SequentialColorMap = "matlab:gray",
     ):
-        super().__init__()
+        super().__init__(parent)
         # ---- Adding Attributes ----
         self.name = display_name
         self.display_colormap = cmap.Colormap(image_cmap)
@@ -64,6 +76,10 @@ class BaseImageDisplay(QWidget):
 
         # Resets color limits to scale correctly.
         self.reset_levels(1, 99)
+
+    @property
+    def image_size(self) -> tuple[int, int]:
+        return (self.image_data.shape[0], self.image_data.shape[1])
 
     def _set_imview_colormap(
         self,
@@ -113,7 +129,7 @@ class BaseImageDisplay(QWidget):
 
 
 class ImageDisplay(BaseImageDisplay):
-    pixel_clicked = Signal(int, int)
+    pixel_clicked = Signal(ImageClickData)
 
     def __init__(
         self,
@@ -126,12 +142,24 @@ class ImageDisplay(BaseImageDisplay):
             self._on_pixel_clicked
         )
 
-    def _on_pixel_clicked(self, event: MouseClickEvent):
+    def _on_pixel_clicked(self, event: MouseClickEvent) -> None:
+        if event.button() != Qt.MouseButton.LeftButton:
+            return
+        print("EVENT POSITION: ", event.pos())
+        print(self.pg_image_view.getView())
         pos = self.pg_image_view.getView().mapSceneToView(event.pos())
+        print("CALCULATED POSITION: ", pos)
         x = int(pos.x())
         y = int(pos.y())
         img = self.pg_image_view.image
         if img is None:
             return
         if _validate_pixel(y, x, img):
-            self.pixel_clicked.emit(y, x)
+            click_data = ImageClickData(
+                x_exact=pos.x(),
+                y_exact=pos.y(),
+                x_int=x,
+                y_int=y,
+                click_event=event,
+            )
+            self.pixel_clicked.emit(click_data)

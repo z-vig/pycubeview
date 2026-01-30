@@ -14,7 +14,7 @@ PKG_VERSION = "1.0.0"
 
 class CubeViewMainWindow(QMainWindow):
     image_display_added = Signal(ImageDisplay)
-    measurement_display_added = Signal()
+    measurement_display_added = Signal(MeasurementAxisDisplay)
     link_displays = Signal(ImageDisplay, MeasurementAxisDisplay)
 
     def __init__(self) -> None:
@@ -93,6 +93,7 @@ class CubeViewMainWindow(QMainWindow):
             )
 
         self._meas_docks.append(dock)
+        self.measurement_display_added.emit(meas)
 
     def _configure_dock_widget(
         self,

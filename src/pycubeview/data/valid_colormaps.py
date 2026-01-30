@@ -11,6 +11,7 @@ QualitativeColorMap: TypeAlias = Literal[
     "colorbrewer:Accent",
     "colorbrewer:Set2",
     "seaborn:tab10_colorblind",
+    "tol:muted_alt",
 ]
 
 SEQUENTIAL_COLOR_MAPS: tuple[str, ...] = (

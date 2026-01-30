@@ -1,5 +1,6 @@
 # Local Imports
 from pycubeview.global_app_state import AppState
+from pycubeview.actions import ActionCatalog
 
 # PySide6 Imports
 from PySide6.QtCore import QObject
@@ -8,6 +9,7 @@ from PySide6.QtCore import QObject
 class BaseController(QObject):
     def __init__(self) -> None:
         self.app_state = AppState()
+        self.cat = ActionCatalog()
         self._build_actions()
         self._install_actions()
         self._connect_signals()

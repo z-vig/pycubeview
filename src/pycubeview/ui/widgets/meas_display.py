@@ -1,21 +1,41 @@
+# Built-Ins
+from dataclasses import dataclass, field
+from uuid import uuid4, UUID
+
 # Local Imports
 from pycubeview.data.valid_colormaps import QualitativeColorMap
 
 # Dependencies
 import pyqtgraph as pg  # type: ignore
 import numpy as np
+import cmap
 
 # PySide6 Imports
 from PySide6.QtWidgets import QWidget, QVBoxLayout
+from PySide6.QtCore import Signal
+
+
+@dataclass(eq=True, frozen=True)
+class Measurement:
+    pixel_coord: tuple[int, int]
+    name: str
+    plot_data_item: pg.PlotDataItem
+    id: UUID = field(default_factory=uuid4)
 
 
 class BaseMeasurementAxisDisplay(QWidget):
+
     def __init__(
-        self, measurement_name: str, parent: QWidget | None = None, measurement_cmap: QualitativeColorMap
+        self,
+        measurement_name: str,
+        parent: QWidget | None = None,
+        measurement_cmap: QualitativeColorMap = "colorbrewer:Dark2",
     ) -> None:
         super().__init__(parent)
         # ---- Adding attributes and properties ----
         self.name = measurement_name
+        self.cmap = cmap.Colormap(measurement_cmap)
+        self.plotted_count: int = 0
         self._cube: np.ndarray | None = None
         self._meas_lbl: np.ndarray | None = None
 
@@ -49,12 +69,32 @@ class BaseMeasurementAxisDisplay(QWidget):
 
 
 class MeasurementAxisDisplay(BaseMeasurementAxisDisplay):
+    measurement_added = Signal(Measurement)
+
     def __init__(
         self, measurement_name: str, parent: QWidget | None = None
     ) -> None:
         super().__init__(measurement_name, parent)
 
-    def add_measurement(self, y: int, x: int):
+    def add_measurement(self, y: int, x: int) -> None:
+        if self.plotted_count >= 8:
+            print("Max Number of Spectra Plotted. Save and Reset to continue.")
+            return
         measurement = self.cube[y, x, :]
-        plot_item = pg.PlotDataItem(self.meas_lbl, measurement, clickable=True)
+        plot_item = pg.PlotDataItem(
+            self.meas_lbl,
+            measurement,
+            pen=pg.mkPen(color=self.cmap(self.plotted_count).hex),
+            clickable=True,
+        )
         self.pg_plot.addItem(plot_item)
+
+        meas = Measurement(
+            pixel_coord=(y, x),
+            name=f"Measurement{self.plotted_count + 1}",
+            plot_data_item=plot_item,
+        )
+
+        self.measurement_added.emit(meas)
+
+        self.plotted_count += 1

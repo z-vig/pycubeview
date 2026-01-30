@@ -1,5 +1,6 @@
 # Local Imports
 from .base_controller import BaseController
+from pycubeview.ui.widgets.image_display import ImageClickData
 from pycubeview.cubeview_protocols import (
     ImageDisplayProtocol,
     MeasurementAxisDisplayProtocol,
@@ -26,8 +27,8 @@ class LinkController(BaseController):
         return
 
     def _connect_signals(self) -> None:
-        getattr(self._img, "pixel_clicked").connect(self._on_pixel_select)
+        self._img.pixel_clicked.connect(self._on_pixel_select)
 
-    @Slot(int, int)
-    def _on_pixel_select(self, y: int, x: int):
-        self._meas.add_measurement(y, x)
+    @Slot(ImageClickData)
+    def _on_pixel_select(self, click_data: ImageClickData):
+        self._meas.add_measurement(click_data.y_int, click_data.x_int)

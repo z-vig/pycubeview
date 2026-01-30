@@ -6,13 +6,11 @@ import numpy as np
 from pycubeview.custom_types import Path, CubeFileTypes
 from pycubeview.cubeview_protocols import CubeViewMainWindowProtocol
 from .base_controller import BaseController
-from pycubeview.actions import ActionCatalog
 import pycubeview.services.read_cube as read_cube
 import pycubeview.services.read_measurement_axis_label as read_lbl
 
 # PySide6 Imports
 from PySide6.QtWidgets import QFileDialog
-from PySide6.QtCore import Slot
 
 
 class FileController(BaseController):
@@ -21,17 +19,16 @@ class FileController(BaseController):
         super().__init__()
 
     def _build_actions(self):
-        cat = ActionCatalog()
-        self.base_fp_action = cat.set_base_fp.build(
+        self.base_fp_action = self.cat.set_base_fp.build(
             self._window.central_widget, self
         )
-        self.open_cube_action = cat.open_cube.build(
+        self.open_cube_action = self.cat.open_cube.build(
             self._window.central_widget, self
         )
-        self.open_image_action = cat.open_image.build(
+        self.open_image_action = self.cat.open_image.build(
             self._window.central_widget, self
         )
-        self.reset_data_action = cat.reset_data.build(
+        self.reset_data_action = self.cat.reset_data.build(
             self._window.central_widget, self
         )
 
@@ -72,13 +69,15 @@ class FileController(BaseController):
             return None
         return Path(wvl_fp_str)
 
-    @Slot(bool)
     def open_image(
-        self, *, set_image: bool = True, fp: Path | None = None
+        self,
+        *,
+        set_image: bool = True,
+        fp: Path | None = None,
     ) -> tuple[Path | None, CubeFileTypes | None]:
         if fp is None:
             newfp = self._open_cube_dialog()
-            if newfp is None:
+            if not newfp:
                 return (None, None)
         else:
             newfp = fp
@@ -88,7 +87,6 @@ class FileController(BaseController):
             self._window.add_image_display(arr)
         return newfp, suffix
 
-    @Slot(bool)
     def open_meas(self) -> np.ndarray | None:
         fp = self._open_meas_dialog()
         if fp is None:
@@ -96,9 +94,8 @@ class FileController(BaseController):
         arr = read_lbl.open_meas(fp)
         return arr
 
-    @Slot(bool)
-    def open_cube(self) -> None:
-        fp, suffix = self.open_image(set_image=False)
+    def open_cube(self, *, fp: Path | None = None) -> None:
+        fp, suffix = self.open_image(set_image=False, fp=fp)
         if fp is None or suffix is None:
             return None
         if suffix in (".spcub", ".geospcub"):
@@ -117,23 +114,24 @@ class FileController(BaseController):
             arr, _ = read_cube.open_cube(fp)
             imsize = (arr.shape[0], arr.shape[1])
             lbl = self.open_meas()
+            if lbl is None:
+                return None
             if self._check_imsize(imsize):
                 self._window.add_meas_display(arr, lbl)
 
-    @Slot(bool)
     def set_base_fp(self, *, fp: Path | None = None) -> None:
         if fp is None:
             newfp = QFileDialog.getExistingDirectory(
                 caption="Select Base Directory",
                 dir=str(self.app_state.base_fp),
             )
-            if newfp is None:
-                return
+            if not newfp:
+                return None
         else:
             newfp = str(fp)
         self.app_state.base_fp = Path(newfp)
+        return None
 
-    @Slot(bool)
     def reset_data(self) -> None:
         self._window.reset_docks()
 
