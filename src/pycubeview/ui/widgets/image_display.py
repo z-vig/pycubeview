@@ -1,14 +1,11 @@
-# Built-Ins
-from dataclasses import dataclass
-
 # Dependencies
 import numpy as np
 import pyqtgraph as pg  # type: ignore
-from pyqtgraph.GraphicsScene.mouseEvents import MouseClickEvent  # type: ignore
 import cmap
 
 # Local Imports
 from pycubeview.data.valid_colormaps import SequentialColorMap
+from pycubeview.data_transfer_classes import ImageClickData, ImageScatterPoint
 
 # Relative Imports
 from pycubeview.validators.image_display_validators import (
@@ -18,17 +15,9 @@ from pycubeview.validators.image_display_validators import (
 )
 
 # PySide6 Imports
-from PySide6.QtWidgets import QWidget, QVBoxLayout
-from PySide6.QtCore import Signal, Qt
-
-
-@dataclass
-class ImageClickData:
-    x_exact: float
-    y_exact: float
-    x_int: int
-    y_int: int
-    click_event: MouseClickEvent
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QApplication
+from PySide6.QtCore import Signal, QTimer, QPointF
+from PySide6.QtGui import QMouseEvent, QCursor, QPixmap
 
 
 class BaseImageDisplay(QWidget):
@@ -130,6 +119,8 @@ class BaseImageDisplay(QWidget):
 
 class ImageDisplay(BaseImageDisplay):
     pixel_clicked = Signal(ImageClickData)
+    pixel_double_clicked = Signal(ImageClickData)
+    point_plotted = Signal(ImageScatterPoint)
 
     def __init__(
         self,
@@ -138,28 +129,83 @@ class ImageDisplay(BaseImageDisplay):
         image_cmap: SequentialColorMap = "matlab:gray",
     ):
         super().__init__(display_name, parent, image_cmap)
-        self.pg_image_view.scene.sigMouseClicked.connect(  # type: ignore
-            self._on_pixel_clicked
-        )
+        self._click_timer = QTimer(self)
+        self._click_timer.setSingleShot(True)
+        self._click_timer.timeout.connect(self._emit_single_click)
 
-    def _on_pixel_clicked(self, event: MouseClickEvent) -> None:
-        if event.button() != Qt.MouseButton.LeftButton:
-            return
-        print("EVENT POSITION: ", event.pos())
-        print(self.pg_image_view.getView())
-        pos = self.pg_image_view.getView().mapSceneToView(event.pos())
-        print("CALCULATED POSITION: ", pos)
-        x = int(pos.x())
-        y = int(pos.y())
-        img = self.pg_image_view.image
+    def plot_point(self, *, y: int, x: int, color: cmap.Color) -> None:
+        scatter = pg.ScatterPlotItem(
+            x=[x],
+            y=[y],
+            pen=pg.mkPen(None),
+            brush=pg.mkBrush(color=color.hex),
+            size=10,
+        )
+        self.pg_image_view.getView().addItem(scatter)
+        scatter_pt = ImageScatterPoint(
+            x=x, y=y, color=color, scatter_plot_item=scatter
+        )
+        self.point_plotted.emit(scatter_pt)
+
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        self.click_data = self._process_click(event)
+        self._click_timer.start(QApplication.doubleClickInterval())
+
+    def mouseDoubleClickEvent(self, event: QMouseEvent) -> None:
+        self._click_timer.stop()
+        self._emit_double_click()
+
+    def _just_the_tip(self, event: QMouseEvent) -> QPointF:
+        """
+        Gets the position of the mouse tip, rather than the center.
+        """
+        cursor = QCursor()
+        pixmap: QPixmap = cursor.pixmap()
+        hotspot = cursor.hotSpot()
+
+        if pixmap.isNull():
+            return event.position()
+
+        tip_offset = QPointF(-hotspot.x(), -hotspot.y())
+
+        return event.position() + tip_offset
+
+    def _to_data_coords(self, event: QMouseEvent) -> QPointF:
+        widget_coords: QPointF = self._just_the_tip(event)
+        scene_coords: QPointF = self.pg_image_view.getView().mapToScene(
+            widget_coords
+        )
+        view_box: pg.ViewBox = self.pg_image_view.getView()  # type: ignore # noqa
+        data_coords: QPointF = view_box.mapSceneToView(scene_coords)
+        return data_coords
+
+    def _process_click(self, event: QMouseEvent) -> ImageClickData | None:
+        pos = self._to_data_coords(event)
+        x = pos.x()
+        y = pos.y()
+        img: np.ndarray = self.pg_image_view.image  # type: ignore
         if img is None:
-            return
+            return None
         if _validate_pixel(y, x, img):
-            click_data = ImageClickData(
-                x_exact=pos.x(),
-                y_exact=pos.y(),
-                x_int=x,
-                y_int=y,
-                click_event=event,
+            print(f"{x:.2f}, {y:.2f}, {int(x)}, {int(y)}")
+            return ImageClickData(
+                x_exact=x,
+                y_exact=y,
+                x_int=int(x),
+                y_int=int(y),
+                button=event.button(),
+                modifiers=event.modifiers(),
             )
-            self.pixel_clicked.emit(click_data)
+
+        else:
+            return None
+
+    def _emit_single_click(self) -> None:
+        if self.click_data is None:
+            return
+        self.pixel_clicked.emit(self.click_data)
+
+    def _emit_double_click(self) -> None:
+        if self.click_data is None:
+            return
+        self.pixel_double_clicked.emit(self.click_data)

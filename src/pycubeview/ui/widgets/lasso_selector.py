@@ -3,18 +3,18 @@ import math
 from dataclasses import dataclass
 
 # Dependencies
+from PySide6.QtGui import QMouseEvent
 import pyqtgraph as pg  # type: ignore
-from pyqtgraph.GraphicsScene.mouseEvents import MouseClickEvent  # type: ignore
 import numpy as np
 from shapely.geometry import Polygon, Point
 from alphashape import alphashape  # type: ignore
 
 # Local Imports
-from .image_display import ImageDisplay
+from .image_display import ImageDisplay, ImageClickData
 
 # PySide6 Imports
-from PySide6.QtWidgets import QWidget, QApplication
-from PySide6.QtCore import Qt, Signal, QPointF
+from PySide6.QtWidgets import QWidget
+from PySide6.QtCore import Signal
 
 
 @dataclass
@@ -40,6 +40,7 @@ class LassoData:
 
 
 class LassoSelector(QWidget):
+    lasso_started = Signal()
     lasso_finished = Signal(LassoData)
 
     def __init__(self, parent: ImageDisplay):
@@ -56,31 +57,25 @@ class LassoSelector(QWidget):
         self.lasso.setVisible(False)
         super().__init__(parent)
 
-    def on_roi_click(self, mouse_event: MouseClickEvent):
-        mods = QApplication.keyboardModifiers()
-        pos = mouse_event.scenePos()
-        view_pos = self.imdisp.pg_image_view.getView().mapSceneToView(pos)
-        if mods == Qt.KeyboardModifier.ControlModifier:
-            print("ROI CLICK")
-            if not self._drawing:
-                self.start_lasso([[view_pos.x(), view_pos.y()]])
-            else:
-                if mouse_event.double():
-                    self.finish_lasso()
+    def start_lasso(self, click_data: ImageClickData):
+        if not self._drawing:
+            print("Starting Lasso...")
+            pos = [[click_data.x_exact, click_data.y_exact]]
+            self._drawing = True
+            self.lasso.clearPoints()
+            self.lasso.setPoints(pos)
+            self.lasso.setVisible(True)
+            self.lasso_started.emit()
 
-    def start_lasso(self, pos):
-        self._drawing = True
-        self.lasso.clearPoints()
-        self.lasso.setPoints(pos)
-        self.lasso.setVisible(True)
-
-    def lasso_movement(self, pos: QPointF):
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
         if not self._drawing:
             return
-        view_pos = self.imdisp.pg_image_view.getView().mapSceneToView(pos)
+        view_pos = self.imdisp._to_data_coords(event)
         pts = self.lasso.getState()["points"]
         pts.append([view_pos.x(), view_pos.y()])
         self.lasso.setPoints(pts)
+        if len(self.lasso.handles) % 50 == 0:
+            print(self.lasso.handles[-1]["pos"])
         for h in self.lasso.handles:
             h["item"].setVisible(False)
 

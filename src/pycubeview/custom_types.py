@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import TypeAlias, Literal, TypeGuard
+from enum import Enum, auto
 
 PathLike: TypeAlias = Path | str
 
@@ -31,3 +32,9 @@ cube_file_types: list[CubeFileTypes] = [
 
 def is_valid_cube_file(value: str) -> TypeGuard[CubeFileTypes]:
     return value in cube_file_types
+
+
+class WidgetMode(Enum):
+    COLLECT = auto()
+    LASSO = auto()
+    LINE = auto()

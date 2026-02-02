@@ -8,15 +8,18 @@ from pycubeview.cubeview_protocols import CubeViewMainWindowProtocol
 from .base_controller import BaseController
 import pycubeview.services.read_cube as read_cube
 import pycubeview.services.read_measurement_axis_label as read_lbl
+from pycubeview.global_app_state import AppState
 
 # PySide6 Imports
 from PySide6.QtWidgets import QFileDialog
 
 
 class FileController(BaseController):
-    def __init__(self, window: CubeViewMainWindowProtocol):
+    def __init__(
+        self, global_state: AppState, window: CubeViewMainWindowProtocol
+    ):
         self._window = window
-        super().__init__()
+        super().__init__(global_state)
 
     def _build_actions(self):
         self.base_fp_action = self.cat.set_base_fp.build(

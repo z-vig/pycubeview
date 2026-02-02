@@ -1,9 +1,6 @@
-# Built-Ins
-from dataclasses import dataclass, field
-from uuid import uuid4, UUID
-
 # Local Imports
 from pycubeview.data.valid_colormaps import QualitativeColorMap
+from pycubeview.data_transfer_classes import Measurement
 
 # Dependencies
 import pyqtgraph as pg  # type: ignore
@@ -13,14 +10,6 @@ import cmap
 # PySide6 Imports
 from PySide6.QtWidgets import QWidget, QVBoxLayout
 from PySide6.QtCore import Signal
-
-
-@dataclass(eq=True, frozen=True)
-class Measurement:
-    pixel_coord: tuple[int, int]
-    name: str
-    plot_data_item: pg.PlotDataItem
-    id: UUID = field(default_factory=uuid4)
 
 
 class BaseMeasurementAxisDisplay(QWidget):
@@ -81,17 +70,20 @@ class MeasurementAxisDisplay(BaseMeasurementAxisDisplay):
             print("Max Number of Spectra Plotted. Save and Reset to continue.")
             return
         measurement = self.cube[y, x, :]
+        measurement_color = self.cmap(self.plotted_count)
         plot_item = pg.PlotDataItem(
             self.meas_lbl,
             measurement,
-            pen=pg.mkPen(color=self.cmap(self.plotted_count).hex),
+            pen=pg.mkPen(color=measurement_color.hex),
             clickable=True,
         )
         self.pg_plot.addItem(plot_item)
 
         meas = Measurement(
-            pixel_coord=(y, x),
+            pixel_y=y,
+            pixel_x=x,
             name=f"Measurement{self.plotted_count + 1}",
+            color=measurement_color,
             plot_data_item=plot_item,
         )
 

@@ -51,6 +51,8 @@ class ImageDisplayProtocol(Protocol):
     @property
     def image_size(self) -> np.ndarray: ...
 
+    def plot_point(self, x: int, y: int, color: cmap.Color) -> None: ...
+
 
 @runtime_checkable
 class MeasurementAxisDisplayProtocol(Protocol):
