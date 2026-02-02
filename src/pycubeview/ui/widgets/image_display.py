@@ -5,7 +5,12 @@ import cmap
 
 # Local Imports
 from pycubeview.data.valid_colormaps import SequentialColorMap
-from pycubeview.data_transfer_classes import ImageClickData, ImageScatterPoint
+from pycubeview.data_transfer_classes import (
+    ImageClickData,
+    ImageScatterPoint,
+    CursorTracker,
+    PixelValue,
+)
 
 # Relative Imports
 from pycubeview.validators.image_display_validators import (
@@ -16,8 +21,8 @@ from pycubeview.validators.image_display_validators import (
 
 # PySide6 Imports
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QApplication
-from PySide6.QtCore import Signal, QTimer, QPointF
-from PySide6.QtGui import QMouseEvent, QCursor, QPixmap
+from PySide6.QtCore import Signal, QTimer, QPointF, Qt
+from PySide6.QtGui import QMouseEvent
 
 
 class BaseImageDisplay(QWidget):
@@ -34,7 +39,11 @@ class BaseImageDisplay(QWidget):
         self._image_data: np.ndarray | None = None
 
         # ---- Initializing Widgets ----
-        self.pg_image_view = pg.ImageView(name=display_name)
+        self.pg_image_view = pg.ImageView(parent=self, name=display_name)
+        self._vbox = self.pg_image_view.getView()
+
+        # ---- Setting Cursor ----
+        self._vbox.setCursor(Qt.CursorShape.CrossCursor)
 
         # ---- Setting up layout ----
         layout = QVBoxLayout(self)
@@ -121,6 +130,7 @@ class ImageDisplay(BaseImageDisplay):
     pixel_clicked = Signal(ImageClickData)
     pixel_double_clicked = Signal(ImageClickData)
     point_plotted = Signal(ImageScatterPoint)
+    data_tracking = Signal(CursorTracker)
 
     def __init__(
         self,
@@ -132,11 +142,15 @@ class ImageDisplay(BaseImageDisplay):
         self._click_timer = QTimer(self)
         self._click_timer.setSingleShot(True)
         self._click_timer.timeout.connect(self._emit_single_click)
+        self.setMouseTracking(True)
+
+        # Connecting INTERAL ONLY signals
+        self._vbox.scene().sigMouseMoved.connect(self._on_mouse_moved)
 
     def plot_point(self, *, y: int, x: int, color: cmap.Color) -> None:
         scatter = pg.ScatterPlotItem(
-            x=[x],
-            y=[y],
+            x=[x + 0.5],
+            y=[y + 0.5],
             pen=pg.mkPen(None),
             brush=pg.mkBrush(color=color.hex),
             size=10,
@@ -155,28 +169,69 @@ class ImageDisplay(BaseImageDisplay):
         self._click_timer.stop()
         self._emit_double_click()
 
-    def _just_the_tip(self, event: QMouseEvent) -> QPointF:
-        """
-        Gets the position of the mouse tip, rather than the center.
-        """
-        cursor = QCursor()
-        pixmap: QPixmap = cursor.pixmap()
-        hotspot = cursor.hotSpot()
+    def _get_pixel_value(
+        self, x: int, y: int, *, img_arg: np.ndarray | None = None
+    ) -> PixelValue:
+        img: np.ndarray
+        if img_arg is None:
+            _img = self.pg_image_view.getImageItem().image  # axes flipped
+            if _img is not None:
+                img = _img
+            else:
+                raise ValueError("Invalid Image.")
+        else:
+            img = img_arg
 
-        if pixmap.isNull():
-            return event.position()
+        if img.ndim == 2:
+            return PixelValue(v=img[x, y], pixel_type="single")
+        elif img.ndim == 3:
+            return PixelValue(
+                r=img[x, y, 0],
+                g=img[x, y, 1],
+                b=img[x, y, 2],
+                pixel_type="rgb",
+            )
+        else:
+            raise ValueError("Invalid Image Dimensions.")
 
-        tip_offset = QPointF(-hotspot.x(), -hotspot.y())
-
-        return event.position() + tip_offset
+    def _on_mouse_moved(self, pos: QPointF) -> None:
+        if not self._vbox.sceneBoundingRect().contains(pos):
+            return
+        data_position = self._vbox.mapSceneToView(pos)
+        x = data_position.x()
+        y = data_position.y()
+        xint = int(x)
+        yint = int(y)
+        _img = self.pg_image_view.getImageItem().image
+        if _img is not None:
+            img = _img
+        else:
+            raise ValueError("InvalidImage")
+        if _validate_pixel(y, x, np.transpose(img, (1, 0)), quiet=True):
+            val: PixelValue = self._get_pixel_value(xint, yint, img_arg=img)
+            ctrack = CursorTracker(
+                x_exact=x,
+                y_exact=y,
+                x_int=xint,
+                y_int=yint,
+                value=val,
+            )
+            self.data_tracking.emit(ctrack)
+        else:
+            self.data_tracking.emit(
+                CursorTracker(
+                    x_exact=x,
+                    y_exact=y,
+                    x_int=xint,
+                    y_int=yint,
+                    value=PixelValue.null(),
+                )
+            )
 
     def _to_data_coords(self, event: QMouseEvent) -> QPointF:
-        widget_coords: QPointF = self._just_the_tip(event)
-        scene_coords: QPointF = self.pg_image_view.getView().mapToScene(
-            widget_coords
-        )
-        view_box: pg.ViewBox = self.pg_image_view.getView()  # type: ignore # noqa
-        data_coords: QPointF = view_box.mapSceneToView(scene_coords)
+        widget_coords: QPointF = event.position()
+        imview_coords = self.pg_image_view.mapFromParent(widget_coords)
+        data_coords: QPointF = self._vbox.mapSceneToView(imview_coords)
         return data_coords
 
     def _process_click(self, event: QMouseEvent) -> ImageClickData | None:

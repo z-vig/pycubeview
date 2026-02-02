@@ -40,7 +40,7 @@ class LinkController(BaseController):
             return
         if self.app_state.widget_mode != WidgetMode.COLLECT:
             return
-        self._meas.add_measurement(click_data.y_int, click_data.x_int)
+        self._meas.add_measurement(y=click_data.y_int, x=click_data.x_int)
 
     @Slot(Measurement)
     def _on_measurement_added(self, measurement: Measurement) -> None:

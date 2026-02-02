@@ -32,8 +32,12 @@ class CubeViewMainWindow(QMainWindow):
         self.image_menu = self.menuBar().addMenu("Image")
         self.meas_menu = self.menuBar().addMenu("Measurement")
 
-        self.setWindowTitle(f"CubeView v{PKG_VERSION}")
+        # Setting StatusBar
+        self.status_bar = self.statusBar()
+        self.setStatusBar(self.status_bar)
 
+        # Window Settings
+        self.setWindowTitle(f"CubeView v{PKG_VERSION}")
         self._set_window_size()
 
     def _set_window_size(self, image: np.ndarray | None = None) -> None:
@@ -67,13 +71,17 @@ class CubeViewMainWindow(QMainWindow):
                 self.image_displays[imdisp.name],
                 list(self.meas_displays.values())[0],
             )
-
-        self._image_docks.append(dock)
         self.image_display_added.emit(imdisp)
+        self._image_docks.append(dock)
 
-    def add_meas_display(self, arr: np.ndarray, lbls: np.ndarray) -> None:
+    def add_meas_display(
+        self,
+        arr: np.ndarray,
+        lbls: np.ndarray,
+        lbl_unit: str = "Wavelength (nm)",
+    ) -> None:
         num_id = len(self.meas_displays) + 1
-        meas = MeasurementAxisDisplay(f"Measurement{num_id}")
+        meas = MeasurementAxisDisplay(f"Measurement{num_id}", lbl_unit)
         meas.cube = arr
         meas.meas_lbl = lbls
         self.meas_displays[meas.name] = meas
@@ -92,8 +100,8 @@ class CubeViewMainWindow(QMainWindow):
                 self.meas_displays[meas.name],
             )
 
-        self._meas_docks.append(dock)
         self.measurement_display_added.emit(meas)
+        self._meas_docks.append(dock)
 
     def _configure_dock_widget(
         self,

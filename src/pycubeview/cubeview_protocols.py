@@ -1,5 +1,5 @@
 # Built-Ins
-from typing import Protocol, Any, runtime_checkable
+from typing import Protocol, Any, runtime_checkable, Optional
 from collections.abc import Callable
 from pathlib import Path
 
@@ -15,7 +15,7 @@ import pyqtgraph as pg  # type: ignore
 import cmap
 
 # PySide6 Imports
-from PySide6.QtWidgets import QWidget, QMenu
+from PySide6.QtWidgets import QWidget, QMenu, QStatusBar
 
 
 class SignalProtocol(Protocol):
@@ -32,6 +32,7 @@ class CubeViewMainWindowProtocol(Protocol):
     file_menu: QMenu
     image_menu: QMenu
     meas_menu: QMenu
+    status_bar: QStatusBar
 
     def add_image_display(self, arr: np.ndarray) -> None: ...
     def add_meas_display(self, arr: np.ndarray, lbls: np.ndarray) -> None: ...
@@ -40,6 +41,8 @@ class CubeViewMainWindowProtocol(Protocol):
 
 class ImageDisplayProtocol(Protocol):
     pixel_clicked: SignalProtocol
+    data_tracking: SignalProtocol
+    sigMouseMoved: SignalProtocol
     pg_image_view: pg.ImageView
     display_colormap: cmap.Colormap
     name: str
@@ -57,6 +60,7 @@ class ImageDisplayProtocol(Protocol):
 @runtime_checkable
 class MeasurementAxisDisplayProtocol(Protocol):
     measurement_added: Any
+    max_plotted: SignalProtocol
     name: str
     pg_plot: pg.PlotWidget
     plotted_count: int
@@ -70,7 +74,14 @@ class MeasurementAxisDisplayProtocol(Protocol):
     @meas_lbl.setter
     def meas_lbl(self, value: np.ndarray) -> None: ...
 
-    def add_measurement(self, y: int, x: int) -> None: ...
+    def add_measurement(
+        self,
+        *,
+        y: int | None = None,
+        x: int | None = None,
+        x_pixels: Optional[np.ndarray] = None,
+        y_pixels: Optional[np.ndarray] = None,
+    ) -> None: ...
 
 
 class AppStateHandler(Protocol):

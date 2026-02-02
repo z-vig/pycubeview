@@ -22,6 +22,7 @@ dependencies = [
 
 [project.scripts]
 cubeview = "pycubeview.app:main"
+cubeview_dev = "pycubeview.app_dev:main"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

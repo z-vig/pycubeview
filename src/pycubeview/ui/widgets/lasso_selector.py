@@ -1,50 +1,27 @@
 # Built-Ins
 import math
-from dataclasses import dataclass
 
 # Dependencies
-from PySide6.QtGui import QMouseEvent
 import pyqtgraph as pg  # type: ignore
 import numpy as np
 from shapely.geometry import Polygon, Point
 from alphashape import alphashape  # type: ignore
 
 # Local Imports
-from .image_display import ImageDisplay, ImageClickData
+from .image_display import ImageDisplay
+from pycubeview.data_transfer_classes import ImageClickData, LassoData
 
 # PySide6 Imports
 from PySide6.QtWidgets import QWidget
-from PySide6.QtCore import Signal
-
-
-@dataclass
-class LassoData:
-    """
-    Contains data from the lasso selection.
-
-    Attributes
-    ----------
-    vertices: np.ndarray
-        A 2D array with 2 columns. The first is the x coordinates and the
-        second is the y coordinates of the vertices of the lasso.
-    lasso_pixels: np.ndarray
-        2D array with 2 columns. The first is all of the x coordinates and the
-        second is all of the y coordinates of the pixels within the lasso.
-    lasso_mask: np.ndarray
-        2D array with pixel dimensions where all True values are in the lasso.
-    """
-
-    vertices: np.ndarray
-    lasso_pixels: np.ndarray
-    lasso_mask: np.ndarray
+from PySide6.QtCore import Signal, QPointF
 
 
 class LassoSelector(QWidget):
     lasso_started = Signal()
     lasso_finished = Signal(LassoData)
 
-    def __init__(self, parent: ImageDisplay):
-        self.imdisp = parent
+    def __init__(self, img_display: ImageDisplay):
+        self.imdisp = img_display
         self._drawing: bool = False
         self.lasso = pg.PolyLineROI(
             [[0, 0]],
@@ -55,7 +32,7 @@ class LassoSelector(QWidget):
         )
         self.imdisp.pg_image_view.getView().addItem(self.lasso)
         self.lasso.setVisible(False)
-        super().__init__(parent)
+        super().__init__()
 
     def start_lasso(self, click_data: ImageClickData):
         if not self._drawing:
@@ -67,12 +44,12 @@ class LassoSelector(QWidget):
             self.lasso.setVisible(True)
             self.lasso_started.emit()
 
-    def mouseMoveEvent(self, event: QMouseEvent) -> None:
+    def lasso_movement(self, pos: QPointF) -> None:
         if not self._drawing:
             return
-        view_pos = self.imdisp._to_data_coords(event)
+        data_coords = self.imdisp._vbox.mapSceneToView(pos)
         pts = self.lasso.getState()["points"]
-        pts.append([view_pos.x(), view_pos.y()])
+        pts.append([data_coords.x(), data_coords.y()])
         self.lasso.setPoints(pts)
         if len(self.lasso.handles) % 50 == 0:
             print(self.lasso.handles[-1]["pos"])

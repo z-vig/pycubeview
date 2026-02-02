@@ -53,5 +53,6 @@ class MeasurementController(BaseController):
         self._meas.plotted_count = 0
         for meas in self.measurement_cache:
             self._meas.pg_plot.removeItem(meas.plot_data_item)
+            self._meas.pg_plot.removeItem(meas.plot_data_errorbars)
         self.measurement_cache = []
         self.selection_model.initiate_reset()

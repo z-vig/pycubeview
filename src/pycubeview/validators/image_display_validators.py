@@ -70,11 +70,15 @@ def _validate_image_data(arr: np.ndarray) -> ImageViewConfig:
         raise ValueError(f"Array has invalid number of dimensions: {arr.ndim}")
 
 
-def _validate_pixel(y: float | int, x: float | int, img: np.ndarray) -> bool:
+def _validate_pixel(
+    y: float | int, x: float | int, img: np.ndarray, quiet: bool = False
+) -> bool:
     if y < 0 or y > img.shape[0]:
-        print(f"Out of Image Bounds. ({x}, {y})")
+        if not quiet:
+            print(f"Out of Image Bounds. ({x}, {y})")
         return False
     if x < 0 or x > img.shape[1]:
-        print(f"Out of Image Bounds. ({x}, {y})")
+        if not quiet:
+            print(f"Out of Image Bounds. ({x}, {y})")
         return False
     return True

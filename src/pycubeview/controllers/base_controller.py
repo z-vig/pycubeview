@@ -8,6 +8,7 @@ from PySide6.QtCore import QObject
 
 class BaseController(QObject):
     def __init__(self, global_state: AppState) -> None:
+        super().__init__()
         self.cat = ActionCatalog()
         self.app_state = global_state
         self._build_actions()

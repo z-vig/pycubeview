@@ -1,3 +1,6 @@
+# Dependencies
+import pyqtgraph as pg  # type: ignore
+
 # Local Imports
 from .base_controller import BaseController
 from pycubeview.ui.widgets.image_display import ImageDisplay
@@ -8,14 +11,22 @@ from pycubeview.interaction_filters import (
 )
 from pycubeview.custom_types import WidgetMode
 from pycubeview.global_app_state import AppState
-from pycubeview.data_transfer_classes import ImageClickData, ImageScatterPoint
+from pycubeview.data_transfer_classes import (
+    ImageClickData,
+    ImageScatterPoint,
+    LassoData,
+)
 from pycubeview.models.selection_model import SelectionModel
 
 # PySide6 Imports
-from PySide6.QtCore import Slot
+from PySide6.QtCore import Slot, QPointF, Signal
+from PySide6.QtGui import QPolygonF
+from PySide6.QtWidgets import QGraphicsPolygonItem
 
 
 class ImageController(BaseController):
+    lasso_plotted = Signal(LassoData)
+
     def __init__(
         self,
         global_state: AppState,
@@ -25,6 +36,7 @@ class ImageController(BaseController):
         self._img_disp = image_display
         self._lasso = LassoSelector(self._img_disp)
         self.scatter_cache: list[ImageScatterPoint] = []
+        self.poly_cache: list[QGraphicsPolygonItem] = []
         self.selection_model = selection_model
         super().__init__(global_state)
 
@@ -40,6 +52,10 @@ class ImageController(BaseController):
         self._img_disp.pixel_clicked.connect(self.print_coordinate)
         self._img_disp.point_plotted.connect(self.add_point_to_cache)
         self.selection_model.cache_reset.connect(self.reset_cache)
+        self._img_disp._vbox.scene().sigMouseMoved.connect(
+            self._lasso.lasso_movement
+        )
+        self._lasso.lasso_finished.connect(self.plot_lasso_polygon)
 
     @Slot(ImageClickData)
     def print_coordinate(self, click_data: ImageClickData) -> None:
@@ -74,7 +90,22 @@ class ImageController(BaseController):
 
     def reset_cache(self) -> None:
         for i in self.scatter_cache:
-            self._img_disp.pg_image_view.getView().removeItem(
-                i.scatter_plot_item
-            )
+            self._img_disp._vbox.removeItem(i.scatter_plot_item)
+        for j in self.poly_cache:
+            self._img_disp._vbox.removeItem(j)
         self.scatter_cache = []
+        self.poly_cache = []
+
+    @Slot(LassoData)
+    def plot_lasso_polygon(self, lasso_data: LassoData) -> None:
+        pts = [
+            QPointF(*lasso_data.vertices[n, :])
+            for n in range(lasso_data.vertices.shape[0])
+        ]
+        poly = QPolygonF(pts)
+        poly_item = QGraphicsPolygonItem(poly)
+        poly_item.setPen(pg.mkPen("k", width=2))
+
+        self.poly_cache.append(poly_item)
+        self._img_disp._vbox.addItem(poly_item)
+        self.lasso_plotted.emit(lasso_data)

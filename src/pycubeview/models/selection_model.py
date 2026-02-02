@@ -4,6 +4,7 @@ from PySide6.QtCore import QObject, Signal
 
 class SelectionModel(QObject):
     cache_reset = Signal()
+    measurement_picked = Signal()
 
     def __init__(self) -> None:
         super().__init__()
