@@ -1,3 +1,6 @@
+# Built-Ins
+from uuid import UUID
+
 # Dependencies
 import numpy as np
 import pyqtgraph as pg  # type: ignore
@@ -130,6 +133,7 @@ class ImageDisplay(BaseImageDisplay):
     pixel_clicked = Signal(ImageClickData)
     pixel_double_clicked = Signal(ImageClickData)
     point_plotted = Signal(ImageScatterPoint)
+    point_deleted = Signal(UUID)
     data_tracking = Signal(CursorTracker)
 
     def __init__(
@@ -147,7 +151,9 @@ class ImageDisplay(BaseImageDisplay):
         # Connecting INTERAL ONLY signals
         self._vbox.scene().sigMouseMoved.connect(self._on_mouse_moved)
 
-    def plot_point(self, *, y: int, x: int, color: cmap.Color) -> None:
+    def plot_point(
+        self, *, y: int, x: int, color: cmap.Color, identifier: UUID
+    ) -> pg.ScatterPlotItem:
         scatter = pg.ScatterPlotItem(
             x=[x + 0.5],
             y=[y + 0.5],
@@ -157,9 +163,13 @@ class ImageDisplay(BaseImageDisplay):
         )
         self.pg_image_view.getView().addItem(scatter)
         scatter_pt = ImageScatterPoint(
-            x=x, y=y, color=color, scatter_plot_item=scatter
+            x=x, y=y, color=color, scatter_plot_item=scatter, id=identifier
         )
         self.point_plotted.emit(scatter_pt)
+        return scatter
+
+    def delete_point(self, identifier: UUID):
+        self.point_deleted.emit(identifier)
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
         self.click_data = self._process_click(event)

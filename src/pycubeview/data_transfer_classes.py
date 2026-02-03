@@ -1,13 +1,12 @@
 # Built-Ins
-from uuid import UUID, uuid4
-from dataclasses import dataclass, field
+from uuid import UUID
+from dataclasses import dataclass, field, replace
 from typing import Literal, Optional
 
 # Dependencies
 import cmap
 import pyqtgraph as pg  # type: ignore
 import numpy as np
-
 
 # PySide6 Imports
 from PySide6.QtCore import Qt
@@ -51,6 +50,7 @@ class ImageScatterPoint:
     y: int
     color: cmap.Color
     scatter_plot_item: pg.ScatterPlotItem
+    id: UUID
 
 
 @dataclass(eq=True, frozen=True)
@@ -94,6 +94,7 @@ class Measurement:
         A unique identifier for the measurement.
     """
 
+    id: UUID
     name: str
     type: Literal["Group", "Point"]
     color: cmap.Color
@@ -105,7 +106,16 @@ class Measurement:
     plot_data_errorbars: Optional[pg.ErrorBarItem] = None
     x_pixels: Optional[np.ndarray] = None
     y_pixels: Optional[np.ndarray] = None
-    id: UUID = field(default_factory=uuid4)
+
+    def change_name(self, name: str) -> "Measurement":
+        new_plot_data_item = pg.PlotDataItem(
+            x=self.xvalues,
+            y=self.yvalues,
+            pen=pg.mkPen(color=self.color.hex),
+            clickable=True,
+            name=name,
+        )
+        return replace(self, name=name, plot_data_item=new_plot_data_item)
 
 
 @dataclass
@@ -125,6 +135,7 @@ class LassoData:
         2D array with pixel dimensions where all True values are in the lasso.
     """
 
+    id: UUID
     vertices: np.ndarray
     lasso_pixels: np.ndarray
     lasso_mask: np.ndarray

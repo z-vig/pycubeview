@@ -1,3 +1,6 @@
+# Built-Ins
+from uuid import UUID
+
 # Dependencies
 import pyqtgraph as pg  # type: ignore
 
@@ -36,7 +39,7 @@ class ImageController(BaseController):
         self._img_disp = image_display
         self._lasso = LassoSelector(self._img_disp)
         self.scatter_cache: list[ImageScatterPoint] = []
-        self.poly_cache: list[QGraphicsPolygonItem] = []
+        self.poly_cache: dict[UUID, QGraphicsPolygonItem] = {}
         self.selection_model = selection_model
         super().__init__(global_state)
 
@@ -51,6 +54,7 @@ class ImageController(BaseController):
         self._img_disp.pixel_double_clicked.connect(self.try_to_finish_lasso)
         self._img_disp.pixel_clicked.connect(self.print_coordinate)
         self._img_disp.point_plotted.connect(self.add_point_to_cache)
+        self._img_disp.point_deleted.connect(self.remove_point_from_cache)
         self.selection_model.cache_reset.connect(self.reset_cache)
         self._img_disp._vbox.scene().sigMouseMoved.connect(
             self._lasso.lasso_movement
@@ -88,13 +92,22 @@ class ImageController(BaseController):
         self.scatter_cache.append(scatter)
         self.selection_model.image_point_added()
 
+    @Slot(UUID)
+    def remove_point_from_cache(self, id: UUID) -> None:
+        for i in self.scatter_cache:
+            if i.id == id:
+                self._img_disp._vbox.removeItem(i.scatter_plot_item)
+        for poly_id, poly_obj in self.poly_cache.items():
+            if poly_id == id:
+                self._img_disp._vbox.removeItem(poly_obj)
+
     def reset_cache(self) -> None:
         for i in self.scatter_cache:
             self._img_disp._vbox.removeItem(i.scatter_plot_item)
         for j in self.poly_cache:
             self._img_disp._vbox.removeItem(j)
         self.scatter_cache = []
-        self.poly_cache = []
+        self.poly_cache = {}
 
     @Slot(LassoData)
     def plot_lasso_polygon(self, lasso_data: LassoData) -> None:
@@ -106,6 +119,6 @@ class ImageController(BaseController):
         poly_item = QGraphicsPolygonItem(poly)
         poly_item.setPen(pg.mkPen("k", width=2))
 
-        self.poly_cache.append(poly_item)
+        self.poly_cache[lasso_data.id] = poly_item
         self._img_disp._vbox.addItem(poly_item)
         self.lasso_plotted.emit(lasso_data)

@@ -14,8 +14,14 @@ class SelectionModel(QObject):
     def meas_plot_added(self):
         self.n_meas_plots += 1
 
+    def meas_plot_removed(self):
+        self.n_meas_plots -= 1
+
     def image_point_added(self):
         self.n_image_points += 1
+
+    def image_point_removed(self):
+        self.n_image_points -= 1
 
     def initiate_reset(self):
         self.n_image_points = 0

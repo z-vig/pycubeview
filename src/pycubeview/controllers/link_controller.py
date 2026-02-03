@@ -33,6 +33,7 @@ class LinkController(BaseController):
     def _connect_signals(self) -> None:
         self._img.pixel_clicked.connect(self._on_pixel_select)
         self._meas.measurement_added.connect(self._on_measurement_added)
+        self._meas.measurement_deleted.connect(self._on_measurement_deleted)
 
     @Slot(ImageClickData)
     def _on_pixel_select(self, click_data: ImageClickData) -> None:
@@ -48,4 +49,9 @@ class LinkController(BaseController):
             x=measurement.pixel_x,
             y=measurement.pixel_y,
             color=measurement.color,
+            identifier=measurement.id,
         )
+
+    @Slot(Measurement)
+    def _on_measurement_deleted(self, measurement: Measurement) -> None:
+        self._img.delete_point(measurement.id)

@@ -2,6 +2,7 @@
 from typing import Protocol, Any, runtime_checkable, Optional
 from collections.abc import Callable
 from pathlib import Path
+from uuid import UUID
 
 # Local Imports
 from pycubeview.custom_types import CubeFileTypes
@@ -44,6 +45,7 @@ class CubeViewMainWindowProtocol(Protocol):
 class ImageDisplayProtocol(Protocol):
     pixel_clicked: SignalProtocol
     data_tracking: SignalProtocol
+    point_plotted: SignalProtocol
     sigMouseMoved: SignalProtocol
     pg_image_view: pg.ImageView
     display_colormap: cmap.Colormap
@@ -56,14 +58,19 @@ class ImageDisplayProtocol(Protocol):
     @property
     def image_size(self) -> np.ndarray: ...
 
-    def plot_point(self, x: int, y: int, color: cmap.Color) -> None: ...
+    def plot_point(
+        self, x: int, y: int, color: cmap.Color, identifier: object
+    ) -> pg.ScatterPlotItem: ...
+    def delete_point(self, identifier: UUID): ...
 
 
 @runtime_checkable
 class MeasurementAxisDisplayProtocol(Protocol):
     measurement_added: Any
+    measurement_deleted: Any
     max_plotted: SignalProtocol
     pg_plot: pg.PlotWidget
+    pg_legend: pg.LegendItem
     plotted_count: int
 
     @property
@@ -86,7 +93,8 @@ class MeasurementAxisDisplayProtocol(Protocol):
         x: int | None = None,
         x_pixels: Optional[np.ndarray] = None,
         y_pixels: Optional[np.ndarray] = None,
-        vertices: Optional[np.ndarray] = None,
+        new_meas: Optional[np.ndarray] = None,
+        id: Optional[UUID] = None,
     ) -> None: ...
     def reset_cache(self) -> None: ...
     def save_spectral_cache(self) -> None: ...

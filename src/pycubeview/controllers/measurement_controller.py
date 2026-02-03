@@ -58,11 +58,23 @@ class MeasurementController(BaseController):
 
     def _connect_signals(self) -> None:
         self._meas.measurement_added.connect(self.on_adding_measurement)
+        self._meas.measurement_deleted.connect(self.on_deleting_measurement)
 
     def on_adding_measurement(self, meas: Measurement):
         print(f"Measurement Added: {meas.name}, {meas.id}")
         self.selection_model.meas_plot_added()
         self.measurement_cache.append(meas)
+
+    def on_deleting_measurement(self, meas: Measurement):
+        print(f"Measurement Deleted: {meas.name}, {meas.id}")
+        self.selection_model.meas_plot_removed()
+        self.measurement_cache.remove(meas)
+
+    def on_changing_measurement(
+        self, old_meas: Measurement, new_meas: Measurement
+    ):
+        self._meas.pg_legend.removeItem(old_meas.plot_data_item)
+        self._meas.pg_legend.addItem(new_meas.plot_data_item, new_meas.name)
 
     def reset_cache(self) -> None:
         self._meas.plotted_count = 0

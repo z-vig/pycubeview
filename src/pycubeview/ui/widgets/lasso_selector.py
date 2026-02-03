@@ -1,5 +1,6 @@
 # Built-Ins
 import math
+from uuid import uuid4
 
 # Dependencies
 import pyqtgraph as pg  # type: ignore
@@ -94,8 +95,13 @@ class LassoSelector(QWidget):
         lasso_mask = np.zeros(self.imdisp.image_size, dtype=bool)
         lasso_mask[in_y_arr, in_x_arr] = True
 
+        lasso_id = uuid4()
+
         data = LassoData(
-            vertices=xy_verts, lasso_pixels=in_array, lasso_mask=lasso_mask
+            id=lasso_id,
+            vertices=xy_verts,
+            lasso_pixels=in_array,
+            lasso_mask=lasso_mask,
         )
 
         self.lasso_finished.emit(data)

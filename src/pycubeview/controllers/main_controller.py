@@ -25,7 +25,9 @@ class ROIMeasurementAdapter(QObject):
     def handle(self, lasso_data: LassoData) -> None:
         xpixels = lasso_data.lasso_pixels[:, 0]
         ypixels = lasso_data.lasso_pixels[:, 1]
-        self.receiver._meas.add_measurement(x_pixels=xpixels, y_pixels=ypixels)
+        self.receiver._meas.add_measurement(
+            x_pixels=xpixels, y_pixels=ypixels, id=lasso_data.id
+        )
 
 
 class MainController(QObject):

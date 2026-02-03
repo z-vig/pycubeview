@@ -36,5 +36,6 @@ def is_valid_cube_file(value: str) -> TypeGuard[CubeFileTypes]:
 
 class WidgetMode(Enum):
     COLLECT = auto()
+    EDIT = auto()
     LASSO = auto()
     LINE = auto()
