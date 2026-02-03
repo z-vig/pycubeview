@@ -62,3 +62,18 @@ class ActionCatalog:
             text="Reset Measurements", callback_name="reset_cache"
         )
     )
+    save_spectral_cache: ActionSpec[MeasurementHandler] = field(
+        default_factory=lambda: ActionSpec[MeasurementHandler](
+            text="Save Measurements", callback_name="save_spectral_cache"
+        )
+    )
+    set_plot_name: ActionSpec[MeasurementHandler] = field(
+        default_factory=lambda: ActionSpec[MeasurementHandler](
+            text="Set Plot Name", callback_name="set_plot_name"
+        )
+    )
+    set_geodata: ActionSpec[AppStateHandler] = field(
+        default_factory=lambda: ActionSpec[AppStateHandler](
+            text="Set Geodata", callback_name="set_geodata"
+        )
+    )

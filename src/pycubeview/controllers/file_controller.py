@@ -25,6 +25,9 @@ class FileController(BaseController):
         self.base_fp_action = self.cat.set_base_fp.build(
             self._window.central_widget, self
         )
+        self.geodata_action = self.cat.set_geodata.build(
+            self._window.central_widget, self
+        )
         self.open_cube_action = self.cat.open_cube.build(
             self._window.central_widget, self
         )
@@ -39,6 +42,7 @@ class FileController(BaseController):
         self._window.meas_menu.addAction(self.open_cube_action)
         self._window.image_menu.addAction(self.open_image_action)
         self._window.file_menu.addAction(self.base_fp_action)
+        self._window.file_menu.addAction(self.geodata_action)
         self._window.file_menu.addAction(self.reset_data_action)
 
     def _connect_signals(self) -> None:
@@ -134,6 +138,21 @@ class FileController(BaseController):
             newfp = str(fp)
         self.app_state.base_fp = Path(newfp)
         return None
+
+    def set_geodata(self, *, fp: Path | None = None) -> None:
+        if self.app_state.geodata is None:
+            self._window.geo_indicator.toggle()
+        if fp is None:
+            newfp, suffix = QFileDialog.getOpenFileName(
+                caption="Select Geodata to Link",
+                dir=str(self.app_state.base_fp),
+                filter=("Geodata File (*.geodata)"),
+            )
+            if not newfp:
+                return None
+        else:
+            newfp = str(fp)
+        self.app_state.geodata = Path(newfp)
 
     def reset_data(self) -> None:
         self._window.reset_docks()

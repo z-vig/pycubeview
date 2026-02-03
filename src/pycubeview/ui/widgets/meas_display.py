@@ -19,14 +19,12 @@ class BaseMeasurementAxisDisplay(QWidget):
 
     def __init__(
         self,
-        measurement_name: str,
         measurement_unit: str,
         parent: QWidget | None = None,
         measurement_cmap: QualitativeColorMap = "colorbrewer:Dark2",
     ) -> None:
         super().__init__(parent)
         # ---- Adding attributes and properties ----
-        self.name = measurement_name
         self.cmap = cmap.Colormap(measurement_cmap)
         self.plotted_count: int = 0
         self._cube: np.ndarray | None = None
@@ -43,6 +41,21 @@ class BaseMeasurementAxisDisplay(QWidget):
         layout = QVBoxLayout()
         layout.addWidget(self.pg_plot)
         self.setLayout(layout)
+
+        # ---- Setting Plot Name ----
+        self._name = ""
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @name.setter
+    def name(self, value: str) -> None:
+        item = self.pg_plot.getPlotItem()
+        if item is None:
+            return
+        item.setTitle(value)
+        self._name = value
 
     @property
     def cube(self) -> np.ndarray:
@@ -71,11 +84,10 @@ class MeasurementAxisDisplay(BaseMeasurementAxisDisplay):
 
     def __init__(
         self,
-        measurement_name: str,
         measurement_unit: str,
         parent: QWidget | None = None,
     ) -> None:
-        super().__init__(measurement_name, measurement_unit, parent)
+        super().__init__(measurement_unit, parent)
 
     def add_measurement(
         self,
@@ -113,9 +125,12 @@ class MeasurementAxisDisplay(BaseMeasurementAxisDisplay):
             errorbar_item.setVisible(False)
 
             meas = Measurement(
+                name=f"Measurement{self.plotted_count + 1}",
+                type="Point",
                 pixel_y=y,
                 pixel_x=x,
-                name=f"Measurement{self.plotted_count + 1}",
+                yvalues=measurement,
+                xvalues=self.meas_lbl,
                 color=measurement_color,
                 plot_data_item=plot_item,
                 plot_data_errorbars=errorbar_item,
@@ -146,12 +161,17 @@ class MeasurementAxisDisplay(BaseMeasurementAxisDisplay):
             self.pg_plot.addItem(errorbar_item)
 
             meas = Measurement(
+                name=f"Measurement{self.plotted_count + 1}",
+                type="Group",
                 color=measurement_color,
                 pixel_x=int(np.mean(x_pixels)),
                 pixel_y=int(np.mean(y_pixels)),
-                name=f"Measurement{self.plotted_count + 1}",
+                yvalues=roi_mean,
+                xvalues=self.meas_lbl,
                 plot_data_item=plot_item,
                 plot_data_errorbars=errorbar_item,
+                x_pixels=x_pixels,
+                y_pixels=y_pixels,
             )
         else:
             raise ValueError(

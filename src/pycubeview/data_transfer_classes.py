@@ -63,14 +63,20 @@ class Measurement:
 
     Attributes
     ----------
+    name: str
+        The name of the measurement.
+    type: str
+        Type of measurement. Either Point or Group.
     color: cmap.Color
         The color assigned to the measurement.
     pixel_x: int
         The x coordinate of the measurement in pixel space or the centroid x.
     pixel_y: int
         The y coordinate of the measurement in pixel space or the centroid y.
-    name: str
-        The name of the measurement.
+    yvalues: np.ndarray
+        The values of the measurement, or the mean of a group.
+    xvalues: np.ndarray
+        Measurement label values.
     plot_data_item: pg.PlotDataItem
         The plot item containing the measurement data.
     plot_data_errorbars: Optional[pg.ErrorBarItem]
@@ -81,14 +87,20 @@ class Measurement:
     y_pixels: Optional[np.ndarray]
         The y coordinates of all pixels in the measurement. None if single
         point.
+    vertices: Optional[np.ndarray]
+        2-column array where the first column is the x values and the second
+        is the y values of all the vertices enclosed by the Group.
     id: UUID
         A unique identifier for the measurement.
     """
 
+    name: str
+    type: Literal["Group", "Point"]
     color: cmap.Color
     pixel_x: int
     pixel_y: int
-    name: str
+    yvalues: np.ndarray
+    xvalues: np.ndarray
     plot_data_item: pg.PlotDataItem
     plot_data_errorbars: Optional[pg.ErrorBarItem] = None
     x_pixels: Optional[np.ndarray] = None

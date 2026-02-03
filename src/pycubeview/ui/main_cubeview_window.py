@@ -1,6 +1,7 @@
 # Local Imports
 from pycubeview.ui.widgets.image_display import ImageDisplay
 from pycubeview.ui.widgets.meas_display import MeasurementAxisDisplay
+from .status_indicator import BaseStatusIndicator
 
 # Dependencies
 import numpy as np
@@ -35,6 +36,10 @@ class CubeViewMainWindow(QMainWindow):
         # Setting StatusBar
         self.status_bar = self.statusBar()
         self.setStatusBar(self.status_bar)
+
+        # Status Indicators
+        self.geo_indicator = BaseStatusIndicator(self, "Geo")
+        self.geo_indicator.icon.setStatusTip("Geo data has been loaded.")
 
         # Window Settings
         self.setWindowTitle(f"CubeView v{PKG_VERSION}")
@@ -81,7 +86,8 @@ class CubeViewMainWindow(QMainWindow):
         lbl_unit: str = "Wavelength (nm)",
     ) -> None:
         num_id = len(self.meas_displays) + 1
-        meas = MeasurementAxisDisplay(f"Measurement{num_id}", lbl_unit)
+        meas = MeasurementAxisDisplay(lbl_unit)
+        meas.name = f"MeasurementDisplay{num_id}"
         meas.cube = arr
         meas.meas_lbl = lbls
         self.meas_displays[meas.name] = meas

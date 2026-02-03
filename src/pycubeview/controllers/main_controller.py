@@ -55,6 +55,8 @@ class MainController(QObject):
         img_display.data_tracking.connect(self._update_tracking_status)
         controller = ImageController(self.app_state, self.selection_model, img_display)  # type: ignore  # noqa
         self.image_controllers.append(controller)
+
+        # Connecting Lasso Signal
         for i in self.measurement_controllers:
             adapter = ROIMeasurementAdapter(i)
             self._roi_adapters.append(adapter)
@@ -69,6 +71,8 @@ class MainController(QObject):
             self.app_state, self.selection_model, meas_display
         )
         self.measurement_controllers.append(controller)
+
+        # Connecting Lasso Signal
         for i in self.image_controllers:
             adapter = ROIMeasurementAdapter(controller)
             self._roi_adapters.append(adapter)
