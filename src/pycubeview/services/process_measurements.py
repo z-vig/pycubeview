@@ -56,19 +56,16 @@ def spectral_processing(
         case [flag, *rest]:
             match flag.step:
                 case "OUTLIER_REMOVAL":
-                    print("OUTLIER_REMOVAL_APPLIED")
                     spectrum.outlier_removal(**flag.config)
                     return spectral_processing(
                         spectrum=spectrum, processing_flags=rest
                     )
                 case "FILTERING":
-                    print("FILTERING APPLIED")
                     spectrum.noise_reduction(**flag.config)
                     return spectral_processing(
                         spectrum=spectrum, processing_flags=rest
                     )
                 case "CONTINUUM_REMOVAL":
-                    print("CONTINUUM REMOVAL APPLIED")
                     spectrum.continuum_removal(**flag.config)
                     return spectral_processing(
                         spectrum=spectrum, processing_flags=rest
@@ -77,51 +74,3 @@ def spectral_processing(
         case flags:
             # Fallback for unexpected contents
             raise TypeError(f"Unsupported processing flags: {flags!r}")
-
-
-# if __name__ == "__main__":
-#     from typing import TypeAlias
-
-#     SpecFlag: TypeAlias = ProcessingFlag[SpectralProcessingStepLiteral]
-#     outlier_removal: SpecFlag = SpecFlag(
-#         "OUTLIER_REMOVAL", {"sigma_threshold": 1.5}
-#     )
-#     box_filtering: SpecFlag = SpecFlag(
-#         "FILTERING", {"method": "box_filter", "filter_width": 5}
-#     )
-#     contrem: SpecFlag = SpecFlag(
-#         "CONTINUUM_REMOVAL", {"method": "double_line"}
-#     )
-
-#     # Demo: build a simple spectrum and run a small pipeline
-#     rng = np.random.default_rng()
-#     spec = rsk.Spec1D(
-#         rng.normal(0.5, 0.05, 83), np.linspace(500, 3000, 83), "nm"
-#     )
-
-#     plt.plot(spec.wavelength.values, spec.spectrum)
-
-#     processed = spectral_processing(
-#         spec,
-#         processing_flags=[
-#             (
-#                 SpectralProcessingStep.OUTLIER_REMOVAL,
-#                 {"sigma_threshold": 1.5},
-#             ),
-#             (
-#                 SpectralProcessingStep.FILTERING,
-#                 {"method": "box_filter", "filter_width": 5},
-#             ),
-#             (
-#                 SpectralProcessingStep.CONTINUUM_REMOVAL,
-#                 {"method": "double_line"},
-#             ),
-#         ],
-#     )
-
-#     plt.plot(spec.wavelength.values, spec.filtered)
-#     plt.plot(spec.wavelength.values, spec.continuum)
-
-#     plt.figure()
-#     plt.plot(spec.wavelength.values, spec.contrem)
-#     plt.show()

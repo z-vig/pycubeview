@@ -1,5 +1,5 @@
 # Built-Ins
-from typing import Protocol, Any, runtime_checkable, Optional
+from typing import Protocol, Any, runtime_checkable, Optional, TypeVar
 from collections.abc import Callable
 from pathlib import Path
 from uuid import UUID
@@ -20,6 +20,8 @@ import cmap
 
 # PySide6 Imports
 from PySide6.QtWidgets import QWidget, QMenu, QStatusBar
+
+T = TypeVar("T")
 
 
 class SignalProtocol(Protocol):
@@ -123,11 +125,11 @@ class MeasurementHandler(Protocol):
     def reset_cache(self) -> None: ...
 
 
-class MeasurementProcessorFunction(Protocol):
+class MeasurementProcessorFunction(Protocol[T]):
     def __call__(
         self,
         *,
         measurement: Optional[Measurement] = None,
-        spectrum: Optional[object] = None,
-        processing_flags: list[ProcessingFlag] = [],
-    ) -> object: ...
+        spectrum: Optional[Any] = None,
+        processing_flags: list[ProcessingFlag[T]] = [],
+    ) -> Any: ...

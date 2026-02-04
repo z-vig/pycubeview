@@ -8,6 +8,13 @@ from pycubeview.ui.widgets.meas_display import MeasurementAxisDisplay
 from pycubeview.data_transfer_classes import Measurement
 from pycubeview.global_app_state import AppState
 from pycubeview.models.selection_model import SelectionModel
+from pycubeview.services.process_measurements import (
+    spectral_processing,
+    ProcessingFlag,
+)
+from pycubeview.ui.widgets.spectral_processing_steps import (
+    get_spectral_processing_steps,
+)
 
 # Dependencies
 import spectralio as sio
@@ -28,12 +35,20 @@ class MeasurementController(BaseController):
     ) -> None:
         self._meas = meas_display
         self.measurement_cache: list[Measurement] = []
+        self._unprocessed_cache: list[Measurement] = []
         self.selection_model = selection_model
         super().__init__(global_state)
 
         # ---- Processor AddOn ----
         self.processor = MeasurementProcessor(self._meas)
-        self.processor.close()
+        self.processor.hide()
+
+        steps = get_spectral_processing_steps(self.processor)
+        self._step_cfg_list = []
+        for step_name, step_config in steps:
+            self._step_cfg_list.append(step_config)
+            self.processor.add_step(step_name, step_config)
+        self.processor.processing_update.connect(self.on_processing_update)
 
     def _build_actions(self) -> None:
         self.reset_cache_action = self.cat.reset_cache.build(self._meas, self)
@@ -73,17 +88,30 @@ class MeasurementController(BaseController):
         print(f"Measurement Added: {meas.name}, {meas.id}")
         self.selection_model.meas_plot_added()
         self.measurement_cache.append(meas)
+        self._unprocessed_cache.append(meas)
+        self.processor.run_processing()
 
     def on_deleting_measurement(self, meas: Measurement):
         print(f"Measurement Deleted: {meas.name}, {meas.id}")
         self.selection_model.meas_plot_removed()
         self.measurement_cache.remove(meas)
+        self._unprocessed_cache.remove(meas)
 
     def on_changing_measurement(
         self, old_meas: Measurement, new_meas: Measurement
     ):
         self._meas.pg_legend.removeItem(old_meas.plot_data_item)
         self._meas.pg_legend.addItem(new_meas.plot_data_item, new_meas.name)
+
+    def on_processing_update(self, flags: list[ProcessingFlag]):
+        for i in self.measurement_cache:
+            processed_spec = spectral_processing(
+                measurement=i, processing_flags=flags
+            )
+            x, _ = i.plot_data_item.getData()
+            i.plot_data_item.setData(x=x, y=processed_spec.spectrum)
+            if i.plot_data_errorbars is not None:
+                i.plot_data_errorbars.setData(x=x, y=processed_spec.spectrum)
 
     def reset_cache(self) -> None:
         self._meas.plotted_count = 0
