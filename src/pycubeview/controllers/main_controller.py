@@ -3,6 +3,7 @@ from pycubeview.cubeview_protocols import (
     CubeViewMainWindowProtocol,
     ImageDisplayProtocol,
     MeasurementAxisDisplayProtocol,
+    MeasurementProcessorFunction,
 )
 from pycubeview.global_app_state import AppState
 from .file_controller import FileController
@@ -11,9 +12,18 @@ from .link_controller import LinkController
 from .measurement_controller import MeasurementController
 from pycubeview.models.selection_model import SelectionModel
 from pycubeview.data_transfer_classes import CursorTracker, LassoData
+from pycubeview.ui.widgets.measurement_processor import ParameterWidget
 
 # PySide6 Imports
 from PySide6.QtCore import QObject, Slot
+
+
+def implement_processing(
+    measurement_controller: MeasurementController,
+    possible_steps: dict[str, ParameterWidget],
+    processing_function: MeasurementProcessorFunction,
+):
+    pass
 
 
 class ROIMeasurementAdapter(QObject):
@@ -70,7 +80,7 @@ class MainController(QObject):
     ):
         meas_display.max_plotted.connect(self._update_max_warning)
         controller = MeasurementController(
-            self.app_state, self.selection_model, meas_display
+            self.app_state, self.selection_model, meas_display  # type: ignore
         )
         self.measurement_controllers.append(controller)
 

@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import TypeAlias, Literal, TypeGuard
-from enum import Enum, auto
+from enum import Enum, auto, StrEnum
 
 PathLike: TypeAlias = Path | str
 
@@ -39,3 +39,14 @@ class WidgetMode(Enum):
     EDIT = auto()
     LASSO = auto()
     LINE = auto()
+
+
+class SpectralProcessingStep(StrEnum):
+    OUTLIER_REMOVAL = "OUTLIER_REMOVAL"
+    FILTERING = "FILTERING"
+    CONTINUUM_REMOVAL = "CONTINUUM_REMOVAL"
+
+
+SpectralProcessingStepLiteral: TypeAlias = Literal[
+    "OUTLIER_REMOVAL", "FILTERING", "CONTINUUM_REMOVAL"
+]

@@ -3,7 +3,8 @@ from pathlib import Path
 
 # Local Imports
 from .base_controller import BaseController
-from pycubeview.cubeview_protocols import MeasurementAxisDisplayProtocol
+from pycubeview.ui.widgets.measurement_processor import MeasurementProcessor
+from pycubeview.ui.widgets.meas_display import MeasurementAxisDisplay
 from pycubeview.data_transfer_classes import Measurement
 from pycubeview.global_app_state import AppState
 from pycubeview.models.selection_model import SelectionModel
@@ -23,12 +24,16 @@ class MeasurementController(BaseController):
         self,
         global_state: AppState,
         selection_model: SelectionModel,
-        meas_display: MeasurementAxisDisplayProtocol,
+        meas_display: MeasurementAxisDisplay,
     ) -> None:
         self._meas = meas_display
         self.measurement_cache: list[Measurement] = []
         self.selection_model = selection_model
         super().__init__(global_state)
+
+        # ---- Processor AddOn ----
+        self.processor = MeasurementProcessor(self._meas)
+        self.processor.close()
 
     def _build_actions(self) -> None:
         self.reset_cache_action = self.cat.reset_cache.build(self._meas, self)
@@ -36,6 +41,9 @@ class MeasurementController(BaseController):
             self._meas, self
         )
         self.save_spectral_cache_action = self.cat.save_spectral_cache.build(
+            self._meas, self
+        )
+        self.open_processor_action = self.cat.open_processor.build(
             self._meas, self
         )
 
@@ -55,6 +63,7 @@ class MeasurementController(BaseController):
         menu.addAction(self.reset_cache_action)
         menu.addAction(self.set_plot_name_action)
         menu.addAction(self.save_spectral_cache_action)
+        menu.addAction(self.open_processor_action)
 
     def _connect_signals(self) -> None:
         self._meas.measurement_added.connect(self.on_adding_measurement)
@@ -177,3 +186,6 @@ class MeasurementController(BaseController):
                 self.app_state.geodata,
                 Path(shp_file_dir, f"{self._meas.name}_areas.shp"),
             )
+
+    def open_processor(self) -> None:
+        self.processor.show()

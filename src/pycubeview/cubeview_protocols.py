@@ -6,10 +6,12 @@ from uuid import UUID
 
 # Local Imports
 from pycubeview.custom_types import CubeFileTypes
+from pycubeview.data_transfer_classes import Measurement
 from pycubeview.ui.status_indicator import BaseStatusIndicator
 from pycubeview.ui.widgets.image_display import ImageDisplay
 from pycubeview.ui.widgets.meas_display import MeasurementAxisDisplay
 from pycubeview.global_app_state import AppState
+from pycubeview.services.process_measurements import ProcessingFlag
 
 # Dependencies
 import numpy as np
@@ -99,6 +101,7 @@ class MeasurementAxisDisplayProtocol(Protocol):
     def reset_cache(self) -> None: ...
     def save_spectral_cache(self) -> None: ...
     def set_plot_name(self) -> None: ...
+    def open_processor(self) -> None: ...
 
 
 class AppStateHandler(Protocol):
@@ -118,3 +121,13 @@ class FileHandler(Protocol):
 
 class MeasurementHandler(Protocol):
     def reset_cache(self) -> None: ...
+
+
+class MeasurementProcessorFunction(Protocol):
+    def __call__(
+        self,
+        *,
+        measurement: Optional[Measurement] = None,
+        spectrum: Optional[object] = None,
+        processing_flags: list[ProcessingFlag] = [],
+    ) -> object: ...

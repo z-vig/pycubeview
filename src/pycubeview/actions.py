@@ -77,3 +77,8 @@ class ActionCatalog:
             text="Set Geodata", callback_name="set_geodata"
         )
     )
+    open_processor: ActionSpec[MeasurementHandler] = field(
+        default_factory=lambda: ActionSpec[MeasurementHandler](
+            text="Configure Processing Steps", callback_name="open_processor"
+        )
+    )
