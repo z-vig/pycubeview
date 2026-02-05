@@ -70,7 +70,7 @@ def get_spectral_processing_steps(
     ]
     filtering_widgets: list[ParameterWidget] = [
         OptionBox(["box_filter"], processor),
-        IntSlider((0, 15), "Filter Width", processor),
+        IntSlider((1, 20), "Filter Width", processor),
     ]
     contrem_config: list[ParameterWidget] = [
         OptionBox(["double_line"], processor)

@@ -17,6 +17,10 @@ class CubeViewMainWindow(QMainWindow):
     image_display_added = Signal(ImageDisplay)
     measurement_display_added = Signal(MeasurementAxisDisplay)
     link_displays = Signal(ImageDisplay, MeasurementAxisDisplay)
+    follow_img_display = Signal(ImageDisplay, ImageDisplay)  # Follower, Leader
+    follow_meas_display = Signal(
+        MeasurementAxisDisplay, MeasurementAxisDisplay
+    )  # Follower, Leader
 
     def __init__(self) -> None:
         # Superclass initialization
@@ -59,7 +63,8 @@ class CubeViewMainWindow(QMainWindow):
 
     def add_image_display(self, arr: np.ndarray) -> None:
         num_id = len(self.image_displays) + 1
-        imdisp = ImageDisplay(f"ImageDisplay{num_id}")
+        imdisp = ImageDisplay()
+        imdisp.name = f"ImageDisplay{num_id}"
         imdisp.image_data = arr
         self.image_displays[imdisp.name] = imdisp
         dock = self._configure_dock_widget(
@@ -67,6 +72,8 @@ class CubeViewMainWindow(QMainWindow):
             dock_name=f"Image{num_id}",
             dock_area=Qt.DockWidgetArea.LeftDockWidgetArea,
         )
+
+        self.image_display_added.emit(imdisp)
 
         if len(self._image_docks) > 0:
             self.tabifyDockWidget(self._image_docks[0], dock)
@@ -76,7 +83,14 @@ class CubeViewMainWindow(QMainWindow):
                 self.image_displays[imdisp.name],
                 list(self.meas_displays.values())[0],
             )
-        self.image_display_added.emit(imdisp)
+
+        # Automatically follows the first "Base" Image Display
+        if len(self.image_displays) > 1:
+            self.follow_img_display.emit(
+                self.image_displays[imdisp.name],
+                list(self.image_displays.values())[0],
+            )
+
         self._image_docks.append(dock)
 
     def add_meas_display(
@@ -104,6 +118,12 @@ class CubeViewMainWindow(QMainWindow):
             self.link_displays.emit(
                 list(self.image_displays.values())[0],
                 self.meas_displays[meas.name],
+            )
+
+        if len(self.meas_displays) > 1:
+            self.follow_meas_display.emit(
+                self.meas_displays[meas.name],
+                list(self.meas_displays.values())[0],
             )
 
         self.measurement_display_added.emit(meas)

@@ -32,6 +32,8 @@ class CubeViewMainWindowProtocol(Protocol):
     image_display_added: Any  # Signal(ImageDisplay)
     measurement_display_added: Any  # Signal(MeasurementDisplay)
     link_displays: Any  # Signal(ImageDisplay, MeasurementDisplay)
+    follow_img_display: Any  # Signal(ImageDisplay, ImageDisplay)
+    follow_meas_display: Any  # Signal(MeasurementDisplay, MeasurementDisplay)
     central_widget: QWidget
     image_displays: dict[str, ImageDisplay]
     meas_displays: dict[str, MeasurementAxisDisplay]

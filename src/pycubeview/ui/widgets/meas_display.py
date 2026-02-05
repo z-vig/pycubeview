@@ -29,6 +29,7 @@ class BaseMeasurementAxisDisplay(QWidget):
     ) -> None:
         super().__init__(parent)
         # ---- Adding attributes and properties ----
+        self.id: UUID = uuid4()
         self.cmap = cmap.Colormap(measurement_cmap)
         self.plotted_count: int = 0
         self._cube: np.ndarray | None = None

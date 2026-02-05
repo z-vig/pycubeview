@@ -1,9 +1,7 @@
 # Local Imports
 from .base_controller import BaseController
-from pycubeview.cubeview_protocols import (
-    ImageDisplayProtocol,
-    MeasurementAxisDisplayProtocol,
-)
+from pycubeview.ui.widgets.image_display import ImageDisplay
+from pycubeview.ui.widgets.meas_display import MeasurementAxisDisplay
 from pycubeview.interaction_filters import is_regular_left_click
 from pycubeview.custom_types import WidgetMode
 from pycubeview.global_app_state import AppState
@@ -17,8 +15,8 @@ class LinkController(BaseController):
     def __init__(
         self,
         global_state: AppState,
-        image_display: ImageDisplayProtocol,
-        measurement_display: MeasurementAxisDisplayProtocol,
+        image_display: ImageDisplay,
+        measurement_display: MeasurementAxisDisplay,
     ) -> None:
         self._img = image_display
         self._meas = measurement_display

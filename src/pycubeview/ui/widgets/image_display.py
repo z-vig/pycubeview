@@ -1,5 +1,5 @@
 # Built-Ins
-from uuid import UUID
+from uuid import UUID, uuid4
 
 # Dependencies
 import numpy as np
@@ -31,18 +31,17 @@ from PySide6.QtGui import QMouseEvent
 class BaseImageDisplay(QWidget):
     def __init__(
         self,
-        display_name: str,
         parent: QWidget | None = None,
         image_cmap: SequentialColorMap = "matlab:gray",
     ):
         super().__init__(parent)
         # ---- Adding Attributes ----
-        self.name = display_name
+        self.id: UUID = uuid4()
         self.display_colormap = cmap.Colormap(image_cmap)
         self._image_data: np.ndarray | None = None
 
         # ---- Initializing Widgets ----
-        self.pg_image_view = pg.ImageView(parent=self, name=display_name)
+        self.pg_image_view = pg.ImageView(parent=self)
         self._vbox = self.pg_image_view.getView()
 
         # ---- Setting Cursor ----
@@ -138,11 +137,10 @@ class ImageDisplay(BaseImageDisplay):
 
     def __init__(
         self,
-        display_name: str,
         parent: QWidget | None = None,
         image_cmap: SequentialColorMap = "matlab:gray",
     ):
-        super().__init__(display_name, parent, image_cmap)
+        super().__init__(parent, image_cmap)
         self._click_timer = QTimer(self)
         self._click_timer.setSingleShot(True)
         self._click_timer.timeout.connect(self._emit_single_click)
@@ -150,6 +148,16 @@ class ImageDisplay(BaseImageDisplay):
 
         # Connecting INTERAL ONLY signals
         self._vbox.scene().sigMouseMoved.connect(self._on_mouse_moved)
+
+        self._name = ""
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @name.setter
+    def name(self, value: str) -> None:
+        self._name = value
 
     def plot_point(
         self, *, y: int, x: int, color: cmap.Color, identifier: UUID

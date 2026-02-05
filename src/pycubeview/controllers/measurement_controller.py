@@ -97,12 +97,6 @@ class MeasurementController(BaseController):
         self.measurement_cache.remove(meas)
         self._unprocessed_cache.remove(meas)
 
-    def on_changing_measurement(
-        self, old_meas: Measurement, new_meas: Measurement
-    ):
-        self._meas.pg_legend.removeItem(old_meas.plot_data_item)
-        self._meas.pg_legend.addItem(new_meas.plot_data_item, new_meas.name)
-
     def on_processing_update(self, flags: list[ProcessingFlag]):
         for i in self.measurement_cache:
             processed_spec = spectral_processing(
