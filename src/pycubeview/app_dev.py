@@ -25,6 +25,7 @@ def cubeview():
     )
     controller.file.set_base_fp(fp=base_fp)
     controller.file.open_image(fp=Path(base_fp, "M3G_GDOMES_RFL.geospcub"))
+    # controller.file.open_image(fp=Path(base_fp, "M3G_GDOMES_RFL.geospcub"))
     controller.file.open_cube(fp=Path(base_fp, "M3G_GDOMES_RFL.geospcub"))
 
     main.show()

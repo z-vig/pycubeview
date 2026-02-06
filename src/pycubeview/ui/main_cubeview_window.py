@@ -66,7 +66,7 @@ class CubeViewMainWindow(QMainWindow):
         imdisp = ImageDisplay()
         imdisp.name = f"ImageDisplay{num_id}"
         imdisp.image_data = arr
-        self.image_displays[imdisp.name] = imdisp
+        self.image_displays.update({imdisp.name: imdisp})
         dock = self._configure_dock_widget(
             imdisp,
             dock_name=f"Image{num_id}",
@@ -74,11 +74,12 @@ class CubeViewMainWindow(QMainWindow):
         )
 
         self.image_display_added.emit(imdisp)
+        self._image_docks.append(dock)
 
-        if len(self._image_docks) > 0:
+        if len(self._image_docks) > 1:
             self.tabifyDockWidget(self._image_docks[0], dock)
 
-        if len(self._image_docks) == 1 and len(self._meas_docks) > 0:
+        if (len(self.meas_displays) == 1) and (len(self.image_displays) == 1):
             self.link_displays.emit(
                 self.image_displays[imdisp.name],
                 list(self.meas_displays.values())[0],
@@ -90,8 +91,6 @@ class CubeViewMainWindow(QMainWindow):
                 self.image_displays[imdisp.name],
                 list(self.image_displays.values())[0],
             )
-
-        self._image_docks.append(dock)
 
     def add_meas_display(
         self,
@@ -111,7 +110,10 @@ class CubeViewMainWindow(QMainWindow):
             dock_area=Qt.DockWidgetArea.LeftDockWidgetArea,
         )
 
-        if len(self._meas_docks) > 0:
+        self.measurement_display_added.emit(meas)
+        self._meas_docks.append(dock)
+
+        if len(self._meas_docks) > 1:
             self.tabifyDockWidget(self._meas_docks[0], dock)
 
         if (len(self.meas_displays) == 1) and (len(self.image_displays) > 0):
@@ -125,9 +127,6 @@ class CubeViewMainWindow(QMainWindow):
                 self.meas_displays[meas.name],
                 list(self.meas_displays.values())[0],
             )
-
-        self.measurement_display_added.emit(meas)
-        self._meas_docks.append(dock)
 
     def _configure_dock_widget(
         self,

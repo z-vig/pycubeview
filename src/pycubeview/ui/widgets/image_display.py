@@ -160,7 +160,13 @@ class ImageDisplay(BaseImageDisplay):
         self._name = value
 
     def plot_point(
-        self, *, y: int, x: int, color: cmap.Color, identifier: UUID
+        self,
+        *,
+        y: int,
+        x: int,
+        color: cmap.Color,
+        identifier: UUID,
+        silent: bool = False,
     ) -> pg.ScatterPlotItem:
         scatter = pg.ScatterPlotItem(
             x=[x + 0.5],
@@ -173,6 +179,8 @@ class ImageDisplay(BaseImageDisplay):
         scatter_pt = ImageScatterPoint(
             x=x, y=y, color=color, scatter_plot_item=scatter, id=identifier
         )
+        if silent:
+            return scatter
         self.point_plotted.emit(scatter_pt)
         return scatter
 

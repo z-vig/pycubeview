@@ -10,6 +10,7 @@ import numpy as np
 
 # PySide6 Imports
 from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QGraphicsPolygonItem
 
 
 @dataclass
@@ -51,6 +52,35 @@ class ImageScatterPoint:
     color: cmap.Color
     scatter_plot_item: pg.ScatterPlotItem
     id: UUID
+
+
+@dataclass
+class ImagePolygon:
+    id: UUID
+    polygon_item: QGraphicsPolygonItem
+
+
+@dataclass
+class LassoData:
+    """
+    Contains data from the lasso selection.
+
+    Attributes
+    ----------
+    vertices: np.ndarray
+        A 2D array with 2 columns. The first is the x coordinates and the
+        second is the y coordinates of the vertices of the lasso.
+    lasso_pixels: np.ndarray
+        2D array with 2 columns. The first is all of the x coordinates and the
+        second is all of the y coordinates of the pixels within the lasso.
+    lasso_mask: np.ndarray
+        2D array with pixel dimensions where all True values are in the lasso.
+    """
+
+    id: UUID
+    vertices: np.ndarray
+    lasso_pixels: np.ndarray
+    lasso_mask: np.ndarray
 
 
 @dataclass(eq=True, frozen=True)
@@ -106,6 +136,7 @@ class Measurement:
     plot_data_errorbars: Optional[pg.ErrorBarItem] = None
     x_pixels: Optional[np.ndarray] = None
     y_pixels: Optional[np.ndarray] = None
+    lasso_data: Optional[LassoData] = None
 
     def change_name(self, name: str) -> "Measurement":
         new_plot_data_item = pg.PlotDataItem(
@@ -116,26 +147,3 @@ class Measurement:
             name=name,
         )
         return replace(self, name=name, plot_data_item=new_plot_data_item)
-
-
-@dataclass
-class LassoData:
-    """
-    Contains data from the lasso selection.
-
-    Attributes
-    ----------
-    vertices: np.ndarray
-        A 2D array with 2 columns. The first is the x coordinates and the
-        second is the y coordinates of the vertices of the lasso.
-    lasso_pixels: np.ndarray
-        2D array with 2 columns. The first is all of the x coordinates and the
-        second is all of the y coordinates of the pixels within the lasso.
-    lasso_mask: np.ndarray
-        2D array with pixel dimensions where all True values are in the lasso.
-    """
-
-    id: UUID
-    vertices: np.ndarray
-    lasso_pixels: np.ndarray
-    lasso_mask: np.ndarray

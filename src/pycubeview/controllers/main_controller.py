@@ -1,12 +1,15 @@
+# Built-Ins
+from typing import overload
+
 # Local Imports
 from pycubeview.global_app_state import AppState
 from .file_controller import FileController
 from .image_controller import ImageController
 from .link_controller import LinkController
-from .follow_controller import FollowController
+from .follow_controller import ImageFollower, MeasurementFollower
 from .measurement_controller import MeasurementController
 from pycubeview.models.selection_model import SelectionModel
-from pycubeview.data_transfer_classes import CursorTracker, LassoData
+from pycubeview.data_transfer_classes import CursorTracker
 from pycubeview.ui.widgets.image_display import ImageDisplay
 from pycubeview.ui.widgets.meas_display import MeasurementAxisDisplay
 from pycubeview.ui.main_cubeview_window import CubeViewMainWindow
@@ -14,20 +17,6 @@ from pycubeview.ui.main_cubeview_window import CubeViewMainWindow
 
 # PySide6 Imports
 from PySide6.QtCore import QObject, Slot
-
-
-class ROIMeasurementAdapter(QObject):
-    def __init__(self, receiver: MeasurementController) -> None:
-        super().__init__()
-        self.receiver = receiver
-
-    @Slot(LassoData)
-    def handle(self, lasso_data: LassoData) -> None:
-        xpixels = lasso_data.lasso_pixels[:, 0]
-        ypixels = lasso_data.lasso_pixels[:, 1]
-        self.receiver._meas.add_measurement(
-            x_pixels=xpixels, y_pixels=ypixels, id=lasso_data.id
-        )
 
 
 class MainController(QObject):
@@ -39,8 +28,7 @@ class MainController(QObject):
         self.image_controllers: list[ImageController] = []
         self.measurement_controllers: list[MeasurementController] = []
         self.link_controllers: list[LinkController] = []
-        self.follow_controllers: list[FollowController] = []
-        self._roi_adapters: list[ROIMeasurementAdapter] = []
+        self.follow_controllers: list[ImageFollower | MeasurementFollower] = []
 
         self.selection_model = SelectionModel()
 
@@ -64,12 +52,6 @@ class MainController(QObject):
         )
         self.image_controllers.append(controller)
 
-        # Connecting Lasso Signal
-        for i in self.measurement_controllers:
-            adapter = ROIMeasurementAdapter(i)
-            self._roi_adapters.append(adapter)
-            controller.lasso_plotted.connect(adapter.handle)
-
     @Slot(MeasurementAxisDisplay)
     def _on_adding_measurement_display(
         self, meas_display: MeasurementAxisDisplay
@@ -80,22 +62,15 @@ class MainController(QObject):
         )
         self.measurement_controllers.append(controller)
 
-        # Connecting Lasso Signal
-        for i in self.image_controllers:
-            adapter = ROIMeasurementAdapter(controller)
-            self._roi_adapters.append(adapter)
-            i.lasso_plotted.connect(adapter.handle)
-
     @Slot(ImageDisplay, MeasurementAxisDisplay)
     def _on_linking_displays(
         self,
         img_display: ImageDisplay,
         meas_display: MeasurementAxisDisplay,
     ):
-        print("Displays Linked")
-        link_controller = LinkController(
-            self.app_state, img_display, meas_display
-        )
+        img_ctrl = self._get_controller_from_display(img_display)
+        meas_ctrl = self._get_controller_from_display(meas_display)
+        link_controller = LinkController(self.app_state, img_ctrl, meas_ctrl)
         self.link_controllers.append(link_controller)
 
     @Slot(ImageDisplay, ImageDisplay)
@@ -104,18 +79,9 @@ class MainController(QObject):
         follower: ImageDisplay,
         leader: ImageDisplay,
     ) -> None:
-        follower_controller: ImageController | None = None
-        leader_controller: ImageController | None = None
-        print(f"Searching for: {follower.id}")
-        for i in self.image_controllers:
-            print(f"   testing: {i._img_disp.id}")
-            if i._img_disp.id == follower.id:
-                follower_controller = i
-            if i._img_disp.id == leader.id:
-                leader_controller = i
-        if (follower_controller is None) or (leader_controller is None):
-            raise ValueError("Controllers not found in image follower setup.")
-        follow_controller = FollowController(
+        follower_controller = self._get_controller_from_display(follower)
+        leader_controller = self._get_controller_from_display(leader)
+        follow_controller = ImageFollower(
             self.app_state,
             (follower, leader),
             (follower_controller, leader_controller),
@@ -128,16 +94,9 @@ class MainController(QObject):
         follower: MeasurementAxisDisplay,
         leader: MeasurementAxisDisplay,
     ) -> None:
-        follower_controller: MeasurementController | None = None
-        leader_controller: MeasurementController | None = None
-        for i in self.measurement_controllers:
-            if i._meas == follower:
-                follower_controller = i
-            if i._meas == leader:
-                leader_controller = i
-        if (follower_controller is None) or (leader_controller is None):
-            raise ValueError("Controllers not found in image follower setup.")
-        follow_controller = FollowController(
+        follower_controller = self._get_controller_from_display(follower)
+        leader_controller = self._get_controller_from_display(leader)
+        follow_controller = MeasurementFollower(
             self.app_state,
             (follower, leader),
             (follower_controller, leader_controller),
@@ -168,3 +127,29 @@ class MainController(QObject):
             "Maximum Number of Collected Spectra Reached. Save and Reset to"
             "continue collecting."
         )
+
+    @overload
+    def _get_controller_from_display(
+        self, display: ImageDisplay
+    ) -> ImageController: ...
+
+    @overload
+    def _get_controller_from_display(
+        self, display: MeasurementAxisDisplay
+    ) -> MeasurementController: ...
+
+    def _get_controller_from_display(
+        self, display: ImageDisplay | MeasurementAxisDisplay
+    ) -> ImageController | MeasurementController:
+        controller: ImageController | MeasurementController | None = None
+        if isinstance(display, ImageDisplay):
+            for i in self.image_controllers:
+                if i._img_disp.id == display.id:
+                    controller = i
+        elif isinstance(display, MeasurementAxisDisplay):
+            for j in self.measurement_controllers:
+                if j._meas.id == display.id:
+                    controller = j
+        if controller is None:
+            raise ValueError("Controllers not found in follower setup.")
+        return controller
