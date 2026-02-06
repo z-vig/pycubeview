@@ -107,6 +107,7 @@ class MeasurementAxisDisplay(BaseMeasurementAxisDisplay):
         y_pixels: Optional[np.ndarray] = None,
         new_meas: Optional[Measurement] = None,
         id: Optional[UUID] = None,
+        silent: bool = False,
     ) -> None:
         """
         Add a measurement to the plot.
@@ -220,8 +221,10 @@ class MeasurementAxisDisplay(BaseMeasurementAxisDisplay):
                 " for point measurements or (x_pixels, y_pixels) for ROI."
             )
 
-        self.measurement_added.emit(meas)
         self.plotted_count += 1
+        if silent:
+            return
+        self.measurement_added.emit(meas)
 
     def delete_measurement(self, meas: Measurement):
         self.plotted_count -= 1

@@ -20,12 +20,13 @@ from pycubeview.ui.widgets.spectral_processing_steps import (
 import spectralio as sio
 
 # PySide6 Imports
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Signal, Slot
 from PySide6.QtWidgets import QFileDialog, QInputDialog
 
 
 class MeasurementController(BaseController):
     cache_reset = Signal()
+    added_to_cache = Signal(Measurement)
 
     def __init__(
         self,
@@ -84,18 +85,27 @@ class MeasurementController(BaseController):
         self._meas.measurement_added.connect(self.on_adding_measurement)
         self._meas.measurement_deleted.connect(self.on_deleting_measurement)
 
+    @Slot(Measurement)
     def on_adding_measurement(self, meas: Measurement):
-        print(f"Measurement Added: {meas.name}, {meas.id}")
         self.selection_model.meas_plot_added()
         self.measurement_cache.append(meas)
         self._unprocessed_cache.append(meas)
         self.processor.run_processing()
+        self.added_to_cache.emit(meas)
+        print(
+            f"Measurement Added: {meas.name}, {meas.id},"
+            f" total: {len(self.measurement_cache)}"
+        )
 
+    @Slot(Measurement)
     def on_deleting_measurement(self, meas: Measurement):
-        print(f"Measurement Deleted: {meas.name}, {meas.id}")
         self.selection_model.meas_plot_removed()
         self.measurement_cache.remove(meas)
         self._unprocessed_cache.remove(meas)
+        print(
+            f"Measurement Deleted: {meas.name}, {meas.id},"
+            f" total: {len(self.measurement_cache)}"
+        )
 
     def on_processing_update(self, flags: list[ProcessingFlag]):
         for i in self.measurement_cache:

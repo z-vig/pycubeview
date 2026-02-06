@@ -30,8 +30,10 @@ from PySide6.QtWidgets import QGraphicsPolygonItem
 
 class ImageController(BaseController):
     lasso_plotted = Signal(LassoData)
-    scatter_cache_updated = Signal(ImageScatterPoint)
-    poly_cache_updated = Signal(ImagePolygon)
+    scatter_added = Signal(ImageScatterPoint)
+    scatter_removed = Signal(UUID)
+    poly_added = Signal(ImagePolygon)
+    poly_removed = Signal(UUID)
     polygon_drawn = Signal(UUID)
 
     def __init__(
@@ -96,7 +98,7 @@ class ImageController(BaseController):
     def add_point_to_cache(self, scatter: ImageScatterPoint) -> None:
         print(f"Adding point to cache in {self._img_disp.name}")
         self.scatter_cache.append(scatter)
-        self.scatter_cache_updated.emit(scatter)
+        self.scatter_added.emit(scatter)
         self.selection_model.image_point_added()
         self.add_polygon_by_id(scatter.id)
 
@@ -112,9 +114,12 @@ class ImageController(BaseController):
 
     @Slot(UUID)
     def remove_point_from_cache(self, id: UUID) -> None:
+        print(len(self.scatter_cache))
         for i in self.scatter_cache:
             if i.id == id:
                 self._img_disp._vbox.removeItem(i.scatter_plot_item)
+                print(f"POINT REMOVED FROM {self._img_disp.name}")
+                self.scatter_removed.emit(id)
 
     @Slot(UUID)
     def remove_poly_from_cache(self, id: UUID) -> None:
@@ -122,6 +127,7 @@ class ImageController(BaseController):
         for poly in self.poly_cache:
             if poly.id == id:
                 self._img_disp._vbox.removeItem(poly.polygon_item)
+                self.poly_removed.emit(id)
 
     def reset_cache(self) -> None:
         for i in self.scatter_cache:
@@ -145,5 +151,5 @@ class ImageController(BaseController):
         image_polygon = ImagePolygon(id=lasso_data.id, polygon_item=poly_item)
 
         self.poly_cache.append(image_polygon)
-        self.poly_cache_updated.emit(image_polygon)
+        self.poly_added.emit(image_polygon)
         self.lasso_plotted.emit(lasso_data)

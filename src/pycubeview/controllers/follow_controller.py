@@ -8,7 +8,11 @@ from .measurement_controller import MeasurementController
 from pycubeview.global_app_state import AppState
 from pycubeview.ui.widgets.image_display import ImageDisplay
 from pycubeview.ui.widgets.meas_display import MeasurementAxisDisplay
-from pycubeview.data_transfer_classes import ImageScatterPoint, ImagePolygon
+from pycubeview.data_transfer_classes import (
+    ImageScatterPoint,
+    ImagePolygon,
+    Measurement,
+)
 
 # PySide6 Imports
 from PySide6.QtWidgets import QGraphicsPolygonItem
@@ -68,14 +72,18 @@ class ImageFollower(FollowController[ImageDisplay, ImageController]):
         self.follower_ctrl._lasso.lasso_finished.connect(
             self.leader_ctrl._lasso.lasso_finished
         )
-        self.leader_ctrl.scatter_cache_updated.connect(self.plot_new_point)
-        self.leader_ctrl.poly_cache_updated.connect(self.plot_new_poly)
+        self.leader_ctrl.scatter_added.connect(self.plot_new_point)
+        self.leader_ctrl.scatter_removed.connect(
+            self.follower_ctrl.remove_point_from_cache
+        )
+        self.leader_ctrl.poly_added.connect(self.plot_new_poly)
+        self.leader_ctrl.poly_removed.connect(
+            self.follower_ctrl.remove_poly_from_cache
+        )
 
     def plot_existing_points(self):
         for i in self.leader_ctrl.scatter_cache:
-            self.follower.plot_point(
-                y=i.y, x=i.x, color=i.color, identifier=i.id, silent=True
-            )
+            self.plot_new_point(i)
 
     def plot_existing_polygons(self):
         for poly in self.leader_ctrl.poly_cache:
@@ -87,14 +95,14 @@ class ImageFollower(FollowController[ImageDisplay, ImageController]):
 
     @Slot(ImageScatterPoint)
     def plot_new_point(self, scatter_point: ImageScatterPoint):
-        self.follower_ctrl.add_point_to_cache(scatter_point)
-        self.follower.plot_point(
+        new_scatter_pt = self.follower.plot_point(
             y=scatter_point.y,
             x=scatter_point.x,
             color=scatter_point.color,
             identifier=scatter_point.id,
             silent=True,
         )
+        self.follower_ctrl.add_point_to_cache(new_scatter_pt)
 
     @Slot(ImagePolygon)
     def plot_new_poly(self, polygon: ImagePolygon):
@@ -119,12 +127,15 @@ class MeasurementFollower(
         super().__init__(global_state, display_pair, display_pair_controllers)
 
     def _connect_signals(self) -> None:
-        self.leader.measurement_added.connect(
-            self.follower.measurement_added.emit
-        )
-        self.leader.measurement_deleted.connect(
-            self.follower.measurement_deleted.emit
-        )
-        self.leader.measurement_changed.connect(
-            self.follower.measurement_changed.emit
+        self.leader_ctrl.added_to_cache.connect(self.transfer_measurement)
+
+    @Slot(Measurement)
+    def transfer_measurement(self, measurement: Measurement):
+        self.follower.add_measurement(
+            x=measurement.pixel_x,
+            y=measurement.pixel_y,
+            x_pixels=measurement.x_pixels,
+            y_pixels=measurement.y_pixels,
+            id=measurement.id,
+            silent=True,
         )

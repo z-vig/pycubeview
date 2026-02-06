@@ -167,7 +167,7 @@ class ImageDisplay(BaseImageDisplay):
         color: cmap.Color,
         identifier: UUID,
         silent: bool = False,
-    ) -> pg.ScatterPlotItem:
+    ) -> ImageScatterPoint:
         scatter = pg.ScatterPlotItem(
             x=[x + 0.5],
             y=[y + 0.5],
@@ -180,9 +180,9 @@ class ImageDisplay(BaseImageDisplay):
             x=x, y=y, color=color, scatter_plot_item=scatter, id=identifier
         )
         if silent:
-            return scatter
+            return scatter_pt
         self.point_plotted.emit(scatter_pt)
-        return scatter
+        return scatter_pt
 
     def delete_point(self, identifier: UUID):
         self.point_deleted.emit(identifier)
