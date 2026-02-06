@@ -82,3 +82,8 @@ class ActionCatalog:
             text="Configure Processing Steps", callback_name="open_processor"
         )
     )
+    toggle_error_bars: ActionSpec[MeasurementHandler] = field(
+        default_factory=lambda: ActionSpec[MeasurementHandler](
+            text="Show Errorbars", callback_name="toggle_error_bars"
+        )
+    )

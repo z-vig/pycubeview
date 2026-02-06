@@ -22,6 +22,7 @@ import spectralio as sio
 # PySide6 Imports
 from PySide6.QtCore import Signal, Slot
 from PySide6.QtWidgets import QFileDialog, QInputDialog
+from PySide6.QtGui import QAction
 
 
 class MeasurementController(BaseController):
@@ -62,6 +63,10 @@ class MeasurementController(BaseController):
         self.open_processor_action = self.cat.open_processor.build(
             self._meas, self
         )
+        self.toggle_errorbars_action = QAction("Show Errorbars", self._meas)
+        self.toggle_errorbars_action.setCheckable(True)
+        self.toggle_errorbars_action.toggled.connect(self.toggle_error_bars)
+        self.toggle_errorbars_action.setChecked(True)
 
     def _install_actions(self) -> None:
         item = self._meas.pg_plot.getPlotItem()
@@ -80,13 +85,14 @@ class MeasurementController(BaseController):
         menu.addAction(self.set_plot_name_action)
         menu.addAction(self.save_spectral_cache_action)
         menu.addAction(self.open_processor_action)
+        menu.addAction(self.toggle_errorbars_action)
 
     def _connect_signals(self) -> None:
         self._meas.measurement_added.connect(self.on_adding_measurement)
         self._meas.measurement_deleted.connect(self.on_deleting_measurement)
 
     @Slot(Measurement)
-    def on_adding_measurement(self, meas: Measurement):
+    def on_adding_measurement(self, meas: Measurement) -> None:
         self.selection_model.meas_plot_added()
         self.measurement_cache.append(meas)
         self._unprocessed_cache.append(meas)
@@ -96,6 +102,10 @@ class MeasurementController(BaseController):
             f"Measurement Added: {meas.name}, {meas.id},"
             f" total: {len(self.measurement_cache)}"
         )
+        if meas.plot_data_errorbars is None:
+            return
+        if not self.toggle_errorbars_action.isChecked():
+            meas.plot_data_errorbars.hide()
 
     @Slot(Measurement)
     def on_deleting_measurement(self, meas: Measurement):
@@ -116,6 +126,8 @@ class MeasurementController(BaseController):
             i.plot_data_item.setData(x=x, y=processed_spec.spectrum)
             if i.plot_data_errorbars is not None:
                 i.plot_data_errorbars.setData(x=x, y=processed_spec.spectrum)
+                if not self.toggle_errorbars_action.isChecked():
+                    i.plot_data_errorbars.hide()
 
     def reset_cache(self) -> None:
         self._meas.plotted_count = 0
@@ -221,3 +233,13 @@ class MeasurementController(BaseController):
 
     def open_processor(self) -> None:
         self.processor.show()
+
+    def toggle_error_bars(self) -> None:
+        _state = self.toggle_errorbars_action.isChecked()
+
+        for i in self.measurement_cache:
+            if i.plot_data_errorbars is not None:
+                if not _state:
+                    i.plot_data_errorbars.hide()
+                else:
+                    i.plot_data_errorbars.show()
