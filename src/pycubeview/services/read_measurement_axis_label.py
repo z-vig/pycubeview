@@ -70,7 +70,7 @@ def open_wvl_file(path: Path) -> np.ndarray:
 
 def open_hdr_file(path: Path) -> np.ndarray:
     """Read an ENVI .hdr file"""
-    wvl_pattern = re.compile(r"wavelength\s=\s\{([^}]*)\}")
+    wvl_pattern = re.compile(r"wavelength\s*=\s*\{([^}]*)\}")
     with open(path, "r") as f:
         file_contents = f.read()
     result = re.findall(wvl_pattern, file_contents)
@@ -99,7 +99,11 @@ def open_csv_file(
     Opens a csv file where there is one row of headers and at least one is
     the column label provided. Make sure there are no spaces around the commas!
     """
+    if path.stat().st_size == 0:
+        raise ValueError(f"File is empty. {path}")
     arr = np.loadtxt(path, delimiter=",", dtype=str)
+    if arr.ndim == 1:
+        arr = arr[:, None]
     idx = np.argwhere(np.char.lower(arr[0, :]) == measurement_column_label)
     if idx.size == 0:
         raise ValueError("No measurement column exists.")
