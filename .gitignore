@@ -216,3 +216,5 @@ main.build/
 main.onefile-build/
 main.exe
 PyCubeView.exe
+
+*.ai
