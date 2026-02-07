@@ -217,4 +217,5 @@ main.onefile-build/
 main.exe
 PyCubeView.exe
 
+# Ignoring Schematic Drawings
 *.ai
