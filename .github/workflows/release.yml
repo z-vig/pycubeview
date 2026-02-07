@@ -87,13 +87,13 @@ jobs:
         if: runner.os == 'Windows'
         shell: powershell
         run: |
-          Compress-Archive -Path dist/main.dist -DestinationPath PyCubeView-windows.zip
+          Compress-Archive -Path dist/app.dist -DestinationPath PyCubeView-windows.zip
 
       - name: Package Build (Linux)
         if: runner.os == 'Linux'
         shell: bash
         run: |
-          tar -czf PyCubeView-linux.tar.gz -C dist main.dist
+          tar -czf PyCubeView-linux.tar.gz -C dist app.dist
 
       - name: Package Build (macOS)
         if: runner.os == 'macOS'
@@ -102,10 +102,10 @@ jobs:
           mkdir -p CubeView.app/Contents/{MacOS,Resources}
           cp macos_launcher.sh CubeView.app/Contents/MacOS
           cp Info.plist CubeView.app/Contents
-          cp -R dist/main.dist CubeView.app/Contents/Resources/main.dist
+          cp -R dist/app.dist CubeView.app/Contents/Resources/app.dist
           cp src/pycubeview/icons/PyCubeView_logo_mac.icns CubeView.app/Contents/Resources/iconfile.icns
           chmod +x CubeView.app/Contents/MacOS/macos_launcher.sh
-          chmod +x CubeView.app/Contents/Resources/main.dist/cubeview
+          chmod +x CubeView.app/Contents/Resources/app.dist/cubeview
           zip -r PyCubeView-macos.zip CubeView.app
 
       - name: Upload Release Assets
