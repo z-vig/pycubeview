@@ -1,5 +1,3 @@
-# flake8: noqa
-
 # nuitka-project: --mode=standalone
 # nuitka-project: --enable-plugin=pyside6
 # nuitka-project: --output-filename=cubeview
@@ -16,33 +14,6 @@
 # Speedup Options
 # nuitka-project: --assume-yes-for-downloads
 # nuitka-project: --output-dir=dist
-# nuitka-project: --jobs=24
+# nuitka-project: --jobs=2
 # nuitka-project: --lto=no
 # nuitka-project: --nofollow-import-to=*.tests
-
-from pathlib import Path
-
-# PySide6 Imports
-from PySide6.QtWidgets import QApplication
-
-# Local Imports
-from pycubeview.ui.main_cubeview_window import CubeViewMainWindow
-from pycubeview.controllers.main_controller import MainController
-
-
-def cubeview():
-    app = QApplication([])
-
-    window = CubeViewMainWindow()
-    controller = MainController(window)
-
-    window.show()
-    app.exec()
-
-
-def main():
-    cubeview()
-
-
-if __name__ == "__main__":
-    main()

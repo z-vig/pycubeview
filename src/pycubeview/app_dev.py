@@ -2,9 +2,6 @@
 
 from pathlib import Path
 
-# Dependencies
-import arguably
-
 # PySide6 Imports
 from PySide6.QtWidgets import QApplication
 
@@ -13,7 +10,6 @@ from pycubeview.ui.main_cubeview_window import CubeViewMainWindow
 from pycubeview.controllers.main_controller import MainController
 
 
-@arguably.command
 def cubeview():
     app = QApplication([])
 
@@ -33,4 +29,8 @@ def cubeview():
 
 
 def main():
-    arguably.run()
+    cubeview()
+
+
+if __name__ == "__main__":
+    main()
