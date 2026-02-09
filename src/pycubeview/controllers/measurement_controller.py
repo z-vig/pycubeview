@@ -1,5 +1,6 @@
 # Built-Ins
 from pathlib import Path
+from copy import copy
 
 # Local Imports
 from .base_controller import BaseController
@@ -7,7 +8,6 @@ from pycubeview.ui.widgets.measurement_processor import MeasurementProcessor
 from pycubeview.ui.widgets.meas_display import MeasurementAxisDisplay
 from pycubeview.data_transfer_classes import Measurement
 from pycubeview.global_app_state import AppState
-from pycubeview.models.selection_model import SelectionModel
 from pycubeview.services.process_measurements import (
     spectral_processing,
     ProcessingFlag,
@@ -32,13 +32,11 @@ class MeasurementController(BaseController):
     def __init__(
         self,
         global_state: AppState,
-        selection_model: SelectionModel,
         meas_display: MeasurementAxisDisplay,
     ) -> None:
         self._meas = meas_display
         self.measurement_cache: list[Measurement] = []
         self._unprocessed_cache: list[Measurement] = []
-        self.selection_model = selection_model
         super().__init__(global_state)
 
         # ---- Processor AddOn ----
@@ -93,7 +91,6 @@ class MeasurementController(BaseController):
 
     @Slot(Measurement)
     def on_adding_measurement(self, meas: Measurement) -> None:
-        self.selection_model.meas_plot_added()
         self.measurement_cache.append(meas)
         self._unprocessed_cache.append(meas)
         self.processor.run_processing()
@@ -109,7 +106,6 @@ class MeasurementController(BaseController):
 
     @Slot(Measurement)
     def on_deleting_measurement(self, meas: Measurement):
-        self.selection_model.meas_plot_removed()
         self.measurement_cache.remove(meas)
         self._unprocessed_cache.remove(meas)
         print(
@@ -130,12 +126,14 @@ class MeasurementController(BaseController):
                     i.plot_data_errorbars.hide()
 
     def reset_cache(self) -> None:
-        self._meas.plotted_count = 0
-        for meas in self.measurement_cache:
-            self._meas.pg_plot.removeItem(meas.plot_data_item)
-            self._meas.pg_plot.removeItem(meas.plot_data_errorbars)
+        print(f"Items in Cache: {len(self.measurement_cache)}")
+        to_be_removed = copy(self.measurement_cache)
+        for meas in to_be_removed:
+            print(meas.name)
+            self._meas.delete_measurement(meas)
         self.measurement_cache = []
-        self.selection_model.initiate_reset()
+        self._unprocessed_cache = []
+        self._meas.cmap.reset()
 
     def set_plot_name(self) -> None:
         new_title, ok = QInputDialog.getText(

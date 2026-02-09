@@ -20,7 +20,6 @@ from pycubeview.data_transfer_classes import (
     ImagePolygon,
     LassoData,
 )
-from pycubeview.models.selection_model import SelectionModel
 
 # PySide6 Imports
 from PySide6.QtCore import Slot, QPointF, Signal
@@ -39,14 +38,12 @@ class ImageController(BaseController):
     def __init__(
         self,
         global_state: AppState,
-        selection_model: SelectionModel,
         image_display: ImageDisplay,
     ) -> None:
         self._img_disp = image_display
         self._lasso = LassoSelector(self._img_disp)
         self.scatter_cache: list[ImageScatterPoint] = []
         self.poly_cache: list[ImagePolygon] = []
-        self.selection_model = selection_model
         super().__init__(global_state)
 
     def _build_actions(self) -> None:
@@ -62,7 +59,6 @@ class ImageController(BaseController):
         self._img_disp.point_plotted.connect(self.add_point_to_cache)
         self._img_disp.point_deleted.connect(self.remove_point_from_cache)
         self._img_disp.point_deleted.connect(self.remove_poly_from_cache)
-        self.selection_model.cache_reset.connect(self.reset_cache)
         self._img_disp._vbox.scene().sigMouseMoved.connect(
             self._lasso.lasso_movement
         )
@@ -99,7 +95,6 @@ class ImageController(BaseController):
         print(f"Adding point to cache in {self._img_disp.name}")
         self.scatter_cache.append(scatter)
         self.scatter_added.emit(scatter)
-        self.selection_model.image_point_added()
         self.add_polygon_by_id(scatter.id)
 
     def add_polygon_by_id(self, poly_id: UUID):
@@ -128,14 +123,6 @@ class ImageController(BaseController):
             if poly.id == id:
                 self._img_disp._vbox.removeItem(poly.polygon_item)
                 self.poly_removed.emit(id)
-
-    def reset_cache(self) -> None:
-        for i in self.scatter_cache:
-            self._img_disp._vbox.removeItem(i.scatter_plot_item)
-        for j in self.poly_cache:
-            self._img_disp._vbox.removeItem(j.polygon_item)
-        self.scatter_cache = []
-        self.poly_cache = []
 
     @Slot(LassoData)
     def plot_lasso_polygon(self, lasso_data: LassoData) -> None:

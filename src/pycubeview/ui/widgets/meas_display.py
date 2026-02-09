@@ -6,6 +6,7 @@ from uuid import UUID, uuid4
 # Local Imports
 from pycubeview.data.valid_colormaps import QualitativeColorMap
 from pycubeview.data_transfer_classes import Measurement
+from pycubeview.services.color_sequencer import ColorSequencer
 from .measurement_editor import MeasurementEditor
 
 # Dependencies
@@ -30,7 +31,7 @@ class BaseMeasurementAxisDisplay(QWidget):
         super().__init__(parent)
         # ---- Adding attributes and properties ----
         self.id: UUID = uuid4()
-        self.cmap = cmap.Colormap(measurement_cmap)
+        self.cmap = ColorSequencer(cmap.Colormap(measurement_cmap))
         self.plotted_count: int = 0
         self._cube: np.ndarray | None = None
         self._meas_lbl: np.ndarray | None = None
@@ -116,7 +117,7 @@ class MeasurementAxisDisplay(BaseMeasurementAxisDisplay):
         - ROI measurement: provide both `x_pixels` and `y_pixels` (1D ndarrays
         of ints).
         """
-        if self.plotted_count >= 8:
+        if self.plotted_count >= len(self.cmap.master_list):
             print("Max Number of Spectra Plotted. Save and Reset to continue.")
             self.max_plotted.emit()
             return
@@ -131,7 +132,7 @@ class MeasurementAxisDisplay(BaseMeasurementAxisDisplay):
             self.plotted_count += 1
             return
 
-        measurement_color = self.cmap(self.plotted_count)
+        measurement_color = self.cmap.next()
         measurement_name = f"Measurement{self.plotted_count + 1}"
         measurement_id: UUID
         if id is None:
@@ -229,7 +230,9 @@ class MeasurementAxisDisplay(BaseMeasurementAxisDisplay):
     def delete_measurement(self, meas: Measurement):
         self.plotted_count -= 1
         self.pg_plot.removeItem(meas.plot_data_item)
-        self.pg_plot.removeItem(meas.plot_data_errorbars)
+        if meas.plot_data_errorbars is not None:
+            self.pg_plot.removeItem(meas.plot_data_errorbars)
+        self.cmap.delete(meas.color)
         self.measurement_deleted.emit(meas)
 
     def change_measurement_name(self, meas: Measurement, name: str):

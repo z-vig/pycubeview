@@ -4,7 +4,7 @@
 APP_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
 # Path to the real executable
-DIST_DIR="$APP_DIR/Resources/main.dist"
+DIST_DIR="$APP_DIR/Resources/app.dist"
 EXEC="$DIST_DIR/cubeview"
 
 # Clear quarantine just in case

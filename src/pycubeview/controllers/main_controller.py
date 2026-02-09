@@ -8,7 +8,6 @@ from .image_controller import ImageController
 from .link_controller import LinkController
 from .follow_controller import ImageFollower, MeasurementFollower
 from .measurement_controller import MeasurementController
-from pycubeview.models.selection_model import SelectionModel
 from pycubeview.data_transfer_classes import CursorTracker
 from pycubeview.ui.widgets.image_display import ImageDisplay
 from pycubeview.ui.widgets.meas_display import MeasurementAxisDisplay
@@ -30,8 +29,6 @@ class MainController(QObject):
         self.link_controllers: list[LinkController] = []
         self.follow_controllers: list[ImageFollower | MeasurementFollower] = []
 
-        self.selection_model = SelectionModel()
-
         self._connect_signals()
 
     def _connect_signals(self):
@@ -47,9 +44,7 @@ class MainController(QObject):
     def _on_adding_image_display(self, img_display: ImageDisplay):
         print("Image Display Controller Connected")
         img_display.data_tracking.connect(self._update_tracking_status)
-        controller = ImageController(
-            self.app_state, self.selection_model, img_display
-        )
+        controller = ImageController(self.app_state, img_display)
         self.image_controllers.append(controller)
 
     @Slot(MeasurementAxisDisplay)
@@ -57,9 +52,7 @@ class MainController(QObject):
         self, meas_display: MeasurementAxisDisplay
     ):
         meas_display.max_plotted.connect(self._update_max_warning)
-        controller = MeasurementController(
-            self.app_state, self.selection_model, meas_display
-        )
+        controller = MeasurementController(self.app_state, meas_display)
         self.measurement_controllers.append(controller)
 
     @Slot(ImageDisplay, MeasurementAxisDisplay)
@@ -124,8 +117,8 @@ class MainController(QObject):
     @Slot()
     def _update_max_warning(self):
         self._window.status_bar.showMessage(
-            "Maximum Number of Collected Spectra Reached. Save and Reset to"
-            "continue collecting."
+            "Exceeding maximum number of collected measurements. Save and "
+            "Reset to continue collecting."
         )
 
     @overload
