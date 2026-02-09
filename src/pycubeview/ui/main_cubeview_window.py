@@ -10,7 +10,7 @@ import numpy as np
 from PySide6.QtWidgets import QMainWindow, QDockWidget, QWidget
 from PySide6.QtCore import Qt, Signal
 
-PKG_VERSION = "1.0.0"
+PKG_VERSION = "1.1.0"
 
 
 class CubeViewMainWindow(QMainWindow):
