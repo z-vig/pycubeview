@@ -23,6 +23,7 @@ def cubeview():
     controller.file.open_image(fp=Path(base_fp, "M3G_GDOMES_RFL.geospcub"))
     # controller.file.open_image(fp=Path(base_fp, "M3G_GDOMES_RFL.geospcub"))
     controller.file.open_cube(fp=Path(base_fp, "M3G_GDOMES_RFL.geospcub"))
+    controller.file.set_geodata(fp=Path(base_fp, "M3G_GDOMES_RFL.geodata"))
 
     main.show()
     app.exec()

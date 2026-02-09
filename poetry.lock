@@ -90,14 +90,14 @@ typing = ["narwhals (>=1.42.0)", "pandas-stubs (>=2.0.0)"]
 
 [[package]]
 name = "astropy-iers-data"
-version = "0.2026.2.2.0.48.1"
+version = "0.2026.2.9.0.50.33"
 description = "IERS Earth Rotation and Leap Second tables for the astropy core package"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "astropy_iers_data-0.2026.2.2.0.48.1-py3-none-any.whl", hash = "sha256:62aecb2faea740e0d714808b85512ebe4f29adbfe1e8d5e5481cfd66494d164f"},
-    {file = "astropy_iers_data-0.2026.2.2.0.48.1.tar.gz", hash = "sha256:d495e25566eb1fd08c16eecc190f60b06f56b8d7f3516d279765afef736b3f73"},
+    {file = "astropy_iers_data-0.2026.2.9.0.50.33-py3-none-any.whl", hash = "sha256:ac01dede0240499b23c2b89fdc93093500336197c5c794e6a01173cfd78a7620"},
+    {file = "astropy_iers_data-0.2026.2.9.0.50.33.tar.gz", hash = "sha256:26aa979a2d309cd68367d4e9c0711dc0cd546bd29c797f473d9b4517cd74509a"},
 ]
 
 [package.extras]
@@ -1334,14 +1334,14 @@ files = [
 
 [[package]]
 name = "spectralio"
-version = "0.1.10"
+version = "0.1.11"
 description = "Python-Optimized file formats for spectral data"
 optional = false
 python-versions = "<4,>=3.13"
 groups = ["main"]
 files = [
-    {file = "spectralio-0.1.10-py3-none-any.whl", hash = "sha256:1ea5227772396146af039642459ceb0bca3ba7d12fcc50568c34dc5b6d0eeee5"},
-    {file = "spectralio-0.1.10.tar.gz", hash = "sha256:b51a3104a4a0bbdf974e3bf95523138470962a24407270e49cba2655e2c2b92c"},
+    {file = "spectralio-0.1.11-py3-none-any.whl", hash = "sha256:704c8d4f1e67214c1a4cb1d26198a517bf72542ebeddd5cd7f42cf3e229b41a6"},
+    {file = "spectralio-0.1.11.tar.gz", hash = "sha256:a48c4eff0f7d45fc060221a87276be9761df0186d4f5238c9718bd6013acbe2f"},
 ]
 
 [package.dependencies]

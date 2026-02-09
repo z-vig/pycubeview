@@ -220,6 +220,10 @@ class MeasurementController(BaseController):
                 sio.GeoSpectrum1D.from_point_spec(geoloc, i)
                 for i in point_saves
             ]
+            for save in geo_point_saves:
+                print("\n", save.name)
+                print("   CRS:", save.point.crs)
+                print("   GTRANS:", save.point.geotransform)
             sio.make_points(
                 geo_point_saves,
                 Path(shp_file_dir, f"{self._meas.name}_points.shp"),

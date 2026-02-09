@@ -16,7 +16,7 @@
 # Speedup Options
 # nuitka-project: --assume-yes-for-downloads
 # nuitka-project: --output-dir=dist
-# nuitka-project: --jobs=24
+# nuitka-project: --jobs=3
 # nuitka-project: --lto=no
 # nuitka-project: --nofollow-import-to=*.tests
 
