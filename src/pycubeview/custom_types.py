@@ -41,6 +41,14 @@ class WidgetMode(Enum):
     LINE = auto()
 
 
+SaveMode: TypeAlias = Literal["Group", "Individual"]
+save_modes: list[SaveMode] = ["Group", "Individual"]
+
+
+def is_valid_save_mode(value: str) -> TypeGuard[SaveMode]:
+    return value in save_modes
+
+
 class SpectralProcessingStep(StrEnum):
     OUTLIER_REMOVAL = "OUTLIER_REMOVAL"
     FILTERING = "FILTERING"

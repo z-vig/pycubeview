@@ -87,3 +87,8 @@ class ActionCatalog:
             text="Show Errorbars", callback_name="toggle_error_bars"
         )
     )
+    toggle_save_mode: ActionSpec[FileHandler] = field(
+        default_factory=lambda: ActionSpec[FileHandler](
+            text="Group Save", callback_name="toggle_save_mode"
+        )
+    )

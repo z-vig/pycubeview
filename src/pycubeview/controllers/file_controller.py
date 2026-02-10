@@ -3,8 +3,13 @@ import spectralio as sio
 import numpy as np
 
 # Local Imports
-from pycubeview.custom_types import Path, CubeFileTypes
-from pycubeview.cubeview_protocols import CubeViewMainWindowProtocol
+from pycubeview.custom_types import (
+    Path,
+    CubeFileTypes,
+    save_modes,
+    is_valid_save_mode,
+)
+from pycubeview.ui.main_cubeview_window import CubeViewMainWindow
 from .base_controller import BaseController
 import pycubeview.services.read_cube as read_cube
 import pycubeview.services.read_measurement_axis_label as read_lbl
@@ -12,12 +17,11 @@ from pycubeview.global_app_state import AppState
 
 # PySide6 Imports
 from PySide6.QtWidgets import QFileDialog
+from PySide6.QtGui import QActionGroup, QAction
 
 
 class FileController(BaseController):
-    def __init__(
-        self, global_state: AppState, window: CubeViewMainWindowProtocol
-    ):
+    def __init__(self, global_state: AppState, window: CubeViewMainWindow):
         self._window = window
         super().__init__(global_state)
 
@@ -38,15 +42,26 @@ class FileController(BaseController):
             self._window.central_widget, self
         )
 
+        self.save_mode_group = QActionGroup(self)
+        self.save_mode_group.setExclusive(True)
+
     def _install_actions(self) -> None:
         self._window.meas_menu.addAction(self.open_cube_action)
         self._window.image_menu.addAction(self.open_image_action)
         self._window.file_menu.addAction(self.base_fp_action)
         self._window.file_menu.addAction(self.geodata_action)
         self._window.file_menu.addAction(self.reset_data_action)
+        for mode in save_modes:
+            action = self._window.save_mode_menu.addAction(mode)
+            action.setCheckable(True)
+
+            if mode == self.app_state.save_mode:
+                action.setChecked(True)
+
+            self.save_mode_group.addAction(action)
 
     def _connect_signals(self) -> None:
-        return
+        self.save_mode_group.triggered.connect(self.save_mode_changed)
 
     def _open_cube_dialog(self) -> Path | None:
         cube_fp_str, fp_type = QFileDialog.getOpenFileName(
@@ -168,3 +183,8 @@ class FileController(BaseController):
             )
             return False
         return True
+
+    def save_mode_changed(self, action: QAction) -> None:
+        txt = action.text()
+        if is_valid_save_mode(txt):
+            self.app_state.save_mode = txt

@@ -7,7 +7,7 @@ from .status_indicator import BaseStatusIndicator
 import numpy as np
 
 # PySide6 Imports
-from PySide6.QtWidgets import QMainWindow, QDockWidget, QWidget
+from PySide6.QtWidgets import QMainWindow, QDockWidget, QWidget, QMenu
 from PySide6.QtCore import Qt, Signal
 
 PKG_VERSION = "1.1.0"
@@ -36,6 +36,8 @@ class CubeViewMainWindow(QMainWindow):
         self.file_menu = self.menuBar().addMenu("File")
         self.image_menu = self.menuBar().addMenu("Image")
         self.meas_menu = self.menuBar().addMenu("Measurement")
+        self.save_mode_menu = QMenu("Save Mode", self)
+        self.meas_menu.addMenu(self.save_mode_menu)
 
         # Setting StatusBar
         self.status_bar = self.statusBar()
